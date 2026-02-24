@@ -2,6 +2,7 @@
 set -euo pipefail
 
 CLAUDE_DIR="$HOME/.claude"
+AGENTS_DIR="$CLAUDE_DIR/agents"
 COMMANDS_DIR="$CLAUDE_DIR/commands"
 SETTINGS_FILE="$CLAUDE_DIR/settings.json"
 MANIFEST_FILE="$CLAUDE_DIR/.installed-profile"
@@ -25,6 +26,16 @@ if [ -f "$BACKUP" ]; then
   echo "  [ok] Restored settings.json from backup"
 else
   echo "  [warn] No settings backup found, settings.json left as-is"
+fi
+
+# --- Remove installed agents ---
+if [ -n "${AGENTS:-}" ]; then
+  for agent in $AGENTS; do
+    if [ -f "$AGENTS_DIR/$agent" ]; then
+      rm -f "$AGENTS_DIR/$agent"
+      echo "  [ok] Removed agent: $agent"
+    fi
+  done
 fi
 
 # --- Remove installed commands ---

@@ -3,6 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CLAUDE_DIR="$HOME/.claude"
+AGENTS_DIR="$CLAUDE_DIR/agents"
 COMMANDS_DIR="$CLAUDE_DIR/commands"
 SETTINGS_FILE="$CLAUDE_DIR/settings.json"
 MANIFEST_FILE="$CLAUDE_DIR/.installed-profile"
@@ -39,6 +40,7 @@ if ! command -v jq &>/dev/null; then
 fi
 
 # Ensure target directories exist
+mkdir -p "$AGENTS_DIR"
 mkdir -p "$COMMANDS_DIR"
 
 # Initialize settings.json if it doesn't exist
@@ -58,6 +60,7 @@ echo "  profile: $PROFILE_DIR"
 echo ""
 
 # --- Track installed files for clean uninstall ---
+INSTALLED_AGENTS=()
 INSTALLED_COMMANDS=()
 
 # --- Merge settings.json (base + profile → existing user config) ---
@@ -82,6 +85,28 @@ FINAL_SETTINGS=$(echo "$EXISTING_SETTINGS" | jq -s '
 cp "$SETTINGS_FILE" "$SETTINGS_FILE.bak"
 echo "$FINAL_SETTINGS" | jq '.' > "$SETTINGS_FILE"
 echo "  [ok] Merged settings.json (backup at settings.json.bak)"
+
+# --- Copy base agents ---
+if [ -d "$SCRIPT_DIR/base/agents" ]; then
+  for agent in "$SCRIPT_DIR/base/agents"/*.md; do
+    [ -f "$agent" ] || continue
+    BASENAME=$(basename "$agent")
+    cp "$agent" "$AGENTS_DIR/$BASENAME"
+    INSTALLED_AGENTS+=("$BASENAME")
+    echo "  [ok] Installed base agent: $BASENAME"
+  done
+fi
+
+# --- Copy profile agents ---
+if [ -d "$PROFILE_DIR/agents" ]; then
+  for agent in "$PROFILE_DIR/agents"/*.md; do
+    [ -f "$agent" ] || continue
+    BASENAME=$(basename "$agent")
+    cp "$agent" "$AGENTS_DIR/$BASENAME"
+    INSTALLED_AGENTS+=("$BASENAME")
+    echo "  [ok] Installed profile agent: $BASENAME"
+  done
+fi
 
 # --- Copy base commands ---
 if [ -d "$SCRIPT_DIR/base/commands" ]; then
@@ -126,6 +151,7 @@ fi
   echo "PROFILE=$PROFILE"
   echo "INSTALLED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
   echo "SETTINGS_BACKUP=$SETTINGS_FILE.bak"
+  echo "AGENTS=${INSTALLED_AGENTS[*]}"
   echo "COMMANDS=${INSTALLED_COMMANDS[*]}"
 } > "$MANIFEST_FILE"
 
