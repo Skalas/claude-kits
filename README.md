@@ -1,36 +1,32 @@
 # claude-profiles
 
-Manage switchable [Claude Code](https://docs.anthropic.com/en/docs/claude-code) configuration profiles — conventions, agents, commands, settings, and system prompts — from a single repository.
+Manage [Claude Code](https://docs.anthropic.com/en/docs/claude-code) configuration profiles — domain agents, task agents, commands, settings, and system prompts — from a single repository.
 
 ## Why?
 
-Claude Code reads its configuration from `~/.claude/` (settings, agents, commands, `CLAUDE.md`). When you work across different projects — backend APIs, cloud infrastructure, frontend apps — you want different conventions and tools active. Manually swapping files is tedious and error-prone.
+Claude Code reads its configuration from `~/.claude/` (settings, agents, commands, `CLAUDE.md`). When you work across different projects — backend APIs, cloud infrastructure, frontend apps — you want domain-specific expertise available. Manually managing agent files is tedious and error-prone.
 
 **claude-profiles** gives you:
-- **Shared standards** — Clean Architecture, DRY, KISS, Clean Code applied to every profile via `base/CLAUDE.md`
-- **Domain expertise** — each profile's `CLAUDE.md` carries deep conventions for its tech stack
-- **Task-oriented agents** — code reviewer, test generator, dependency auditor available in every profile
+- **Domain agents** — self-contained agents with full engineering standards and deep domain expertise, all available simultaneously
+- **Task agents** — code reviewer, test generator, dependency auditor available in every session
 - **Slash commands** — `/review`, `/explain`, `/audit-deps`, `/standup` ready to use
-- **One-command switching** — install/uninstall with a single script
+- **One-command setup** — install everything with `./install.sh --all`
 - **Clean uninstall** — a manifest tracks every file so nothing is left behind
 
 ## Quick Start
 
 ```bash
 # Clone the repo
-git clone https://github.com/skalas/claude-kits.git
-cd claude-kits
+git clone https://github.com/skalas/claude-profiles.git
+cd claude-profiles
 
-# See available profiles
-./install.sh
+# Install all profiles (recommended)
+./install.sh --all
 
-# Install a profile
+# Or install a single profile
 ./install.sh ai-connectors
 
-# Switch to a different profile (auto-uninstalls the previous one)
-./install.sh gcp-cloudops
-
-# Remove the active profile
+# Remove the active installation
 ./uninstall.sh
 ```
 
@@ -41,51 +37,60 @@ cd claude-kits
 
 ## Available Profiles
 
-| Profile | Domain |
-|---------|--------|
-| `ai-connectors` | FastAPI, Python async, AI API patterns, Docker, GCP |
-| `nestjs-backend` | NestJS modules, Prisma, PostgreSQL, Jest |
-| `gcp-cloudops` | GCP services, Terraform, CI/CD, networking, IAM, monitoring |
-| `performance-engineering` | Python/Node.js profiling, USE/RED methods, concurrency, HA |
-| `vue-frontend` | Vue 3 Composition API, TypeScript, Pinia, Vue Router, SOLID |
+| Profile | Agent | Domain |
+|---------|-------|--------|
+| `ai-connectors` | `ai-connector-engineer` | FastAPI, Python async, AI API patterns, Docker, GCP |
+| `nestjs-backend` | `nestjs-engineer` | NestJS modules, Prisma, PostgreSQL, Jest |
+| `gcp-cloudops` | `gcp-cloudops-engineer` | GCP services, Terraform, CI/CD, networking, IAM, monitoring |
+| `performance-engineering` | `performance-engineer` | Python/Node.js profiling, USE/RED methods, concurrency, HA |
+| `vue-frontend` | `vue-engineer` | Vue 3 Composition API, TypeScript, Pinia, Vue Router, SOLID |
 
 ## Architecture
 
 ```
 base/                        # Shared by ALL profiles
-  ├── CLAUDE.md              # Team standards: Clean Architecture, DRY, KISS, Clean Code
+  ├── CLAUDE.md              # Interaction preferences (working approach, communication style)
+  ├── standards.md           # Engineering standards source (not installed — embedded in agents)
   ├── settings.json          # Common settings
-  ├── agents/                # Task-oriented agents (code-reviewer, test-generator, dependency-auditor)
+  ├── agents/                # Task agents (code-reviewer, test-generator, dependency-auditor)
   └── commands/              # Slash commands (/review, /explain, /audit-deps, /standup)
 
-profiles/<name>/             # One active at a time
-  ├── CLAUDE.md              # Domain-specific conventions (full tech stack guidance)
+profiles/<name>/             # Domain-specific profiles
+  ├── CLAUDE.md              # Domain expertise source (used to compose agents)
   ├── settings.json          # Profile-specific settings
-  ├── agents/                # Optional profile-specific agents
+  ├── agents/                # Domain agent (self-contained with standards + expertise)
   └── commands/              # Optional profile-specific commands
 ```
 
 ### What goes where
 
-- **`base/CLAUDE.md`** — Framework-agnostic engineering principles. Always active. Every profile inherits these.
-- **`profiles/<name>/CLAUDE.md`** — Deep domain expertise: framework conventions, project structure, testing strategy, tool-specific best practices.
-- **`base/agents/`** — Task-oriented agents for discrete jobs (reviewing code, generating tests, auditing deps). These run as isolated subprocesses — isolation is a benefit for focused tasks.
+- **`base/CLAUDE.md`** — Interaction preferences for the main Claude session. Slim — just working approach and communication style.
+- **`base/standards.md`** — Full engineering standards (Clean Architecture, DRY, KISS, Clean Code). Repo-internal reference embedded into each agent file. Not installed to `~/.claude/`.
+- **`profiles/<name>/CLAUDE.md`** — Domain expertise source material. Used to compose the domain agent file. Not appended to `~/.claude/CLAUDE.md`.
+- **`profiles/<name>/agents/`** — Self-contained domain agent with engineering standards + domain expertise baked in. Agents run as isolated subprocesses, so they need everything inline.
+- **`base/agents/`** — Task-oriented agents for discrete jobs (reviewing code, generating tests, auditing deps).
 - **`base/commands/`** — Slash commands that orchestrate agents or git operations.
 
 ### How installation works
 
-When you run `./install.sh <profile>`:
+When you run `./install.sh --all`:
 
-1. **Settings** — `base/settings.json` is merged with `profiles/<name>/settings.json`, then deep-merged into your existing `~/.claude/settings.json`. A backup is saved.
-2. **Agents & Commands** — Files from both `base/` and the profile are copied into `~/.claude/agents/` and `~/.claude/commands/`.
-3. **CLAUDE.md** — Both base and profile `CLAUDE.md` contents are appended to `~/.claude/CLAUDE.md` between markers for clean removal.
-4. **Manifest** — A manifest at `~/.claude/.installed-profile` tracks everything that was installed.
+1. **Settings** — all `settings.json` files are deep-merged into `~/.claude/settings.json`. A backup is saved.
+2. **Agents** — all `.md` files from `base/agents/` and every `profiles/*/agents/` are copied to `~/.claude/agents/`.
+3. **Commands** — all command files are copied to `~/.claude/commands/`.
+4. **CLAUDE.md** — only `base/CLAUDE.md` (interaction preferences) is appended to `~/.claude/CLAUDE.md`.
+5. **Manifest** — tracks everything installed for clean uninstall.
 
-Installing a new profile automatically uninstalls the previous one first.
+### Why agents are self-contained
 
-## Shared Agents
+Agents run as isolated subprocesses. They don't inherit `~/.claude/CLAUDE.md` content. So each domain agent embeds the full engineering standards and domain expertise directly. This means:
+- Every agent applies the same Clean Architecture, DRY, KISS, Clean Code principles
+- Domain expertise is always available to the agent, not dependent on which profile is "active"
+- All domain agents can be installed simultaneously with `--all`
 
-These agents are available in every profile:
+## Shared Task Agents
+
+These agents are available in every installation:
 
 | Agent | Purpose |
 |-------|---------|
@@ -95,7 +100,7 @@ These agents are available in every profile:
 
 ## Slash Commands
 
-These commands are available in every profile:
+These commands are available in every installation:
 
 | Command | Description |
 |---------|-------------|
@@ -114,13 +119,14 @@ This scaffolds:
 
 ```
 profiles/my-profile/
-  ├── agents/           # Optional profile-specific agents
-  ├── commands/         # Optional profile-specific commands
-  ├── settings.json     # Agent groups, hooks, MCP config
-  └── CLAUDE.md         # Domain conventions (template with section headers)
+  ├── agents/
+  │   └── my-profile-engineer.md   # Template agent with standards embedded
+  ├── commands/
+  ├── settings.json
+  └── CLAUDE.md                    # Domain conventions source
 ```
 
-The generated `CLAUDE.md` includes the standard opening paragraph referencing base standards and section headers (Technical Stack, Conventions, Project Structure, Testing) to fill in.
+The generated agent includes the full engineering standards section. Fill in the domain-specific sections (Technical Stack, Conventions) and customize the agent description and role statement.
 
 ## Uninstalling
 

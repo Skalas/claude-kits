@@ -144,7 +144,7 @@ for p in "${PROFILES[@]}"; do
   fi
 done
 
-# --- Handle CLAUDE.md (append base + all profiles) ---
+# --- Handle CLAUDE.md (append base only — domain expertise is in agents) ---
 CLAUDE_MD="$CLAUDE_DIR/CLAUDE.md"
 CLAUDE_MD_MARKER="# --- claude-profiles: $PROFILE_LABEL ---"
 
@@ -152,24 +152,17 @@ CLAUDE_MD_MARKER="# --- claude-profiles: $PROFILE_LABEL ---"
   echo ""
   echo "$CLAUDE_MD_MARKER"
   [ -f "$SCRIPT_DIR/base/CLAUDE.md" ] && cat "$SCRIPT_DIR/base/CLAUDE.md"
-  for p in "${PROFILES[@]}"; do
-    pdir="$SCRIPT_DIR/profiles/$p"
-    if [ -f "$pdir/CLAUDE.md" ]; then
-      echo ""
-      cat "$pdir/CLAUDE.md"
-    fi
-  done
   echo "# --- end claude-profiles ---"
 } >> "$CLAUDE_MD"
-echo "  [ok] Appended CLAUDE.md sections"
+echo "  [ok] Appended CLAUDE.md (interaction preferences only)"
 
 # --- Write manifest ---
 {
   echo "PROFILE=$PROFILE_LABEL"
   echo "INSTALLED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
   echo "SETTINGS_BACKUP=$SETTINGS_FILE.bak"
-  echo "AGENTS=${INSTALLED_AGENTS[*]}"
-  echo "COMMANDS=${INSTALLED_COMMANDS[*]}"
+  echo "AGENTS=\"${INSTALLED_AGENTS[*]}\""
+  echo "COMMANDS=\"${INSTALLED_COMMANDS[*]}\""
 } > "$MANIFEST_FILE"
 
 echo ""

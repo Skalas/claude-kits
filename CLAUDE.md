@@ -1,52 +1,57 @@
 # Claude Profiles
 
-This repository manages reusable Claude Code configuration profiles. Each profile bundles conventions, agents, commands, settings, and system prompt instructions that get installed into `~/.claude/`.
+This repository manages reusable Claude Code configuration profiles. Each profile provides a self-contained domain agent with full engineering standards and expertise, plus shared task agents, commands, and settings — all installed into `~/.claude/`.
 
 ## Repository Structure
 
 ```
 base/                  # Shared foundation applied to ALL profiles
-  CLAUDE.md            # Team engineering standards (Clean Architecture, DRY, KISS, Clean Code)
+  CLAUDE.md            # Interaction preferences (working approach, communication style)
+  standards.md         # Engineering standards source (Clean Architecture, DRY, KISS, Clean Code)
   settings.json        # Settings merged into every profile
   agents/              # Task-oriented agents (code-reviewer, test-generator, dependency-auditor)
   commands/            # Slash commands (/review, /explain, /audit-deps, /standup)
 
-profiles/<name>/       # Domain-specific profiles (one active at a time)
-  CLAUDE.md            # Full domain expertise and conventions for the tech stack
+profiles/<name>/       # Domain-specific profiles
+  CLAUDE.md            # Domain expertise source (used to compose agents, not installed directly)
   settings.json        # Profile-specific settings
-  agents/              # Optional profile-specific agents
+  agents/              # Domain agent (self-contained with standards + expertise)
   commands/            # Optional profile-specific commands
 ```
 
 ## How Installation Works
 
-`install.sh <profile>` layers base + profile into `~/.claude/`:
-1. Deep-merges `base/settings.json` + `profiles/<name>/settings.json` into `~/.claude/settings.json`
-2. Copies agents from both `base/agents/` and `profiles/<name>/agents/`
-3. Copies commands from both `base/commands/` and `profiles/<name>/commands/`
-4. Appends both `base/CLAUDE.md` and `profiles/<name>/CLAUDE.md` to `~/.claude/CLAUDE.md`
+`install.sh --all` layers base + all profiles into `~/.claude/`:
+1. Deep-merges `base/settings.json` + all `profiles/*/settings.json` into `~/.claude/settings.json`
+2. Copies agents from `base/agents/` and all `profiles/*/agents/` — all domain agents available simultaneously
+3. Copies commands from `base/commands/` and all `profiles/*/commands/`
+4. Appends `base/CLAUDE.md` (interaction preferences only) to `~/.claude/CLAUDE.md`
 5. Writes a manifest to `~/.claude/.installed-profile` for clean uninstall
 
-Only one profile can be active at a time. Installing a new profile auto-uninstalls the previous one.
+You can also install a single profile with `install.sh <profile>` if preferred.
 
 ## Design Principles
 
-- **Conventions in CLAUDE.md** — coding standards live in `CLAUDE.md` files (always active in the main agent), not in agent definitions (isolated subprocesses)
-- **Shared principles in base** — Clean Architecture, DRY, KISS, Clean Code are defined once in `base/CLAUDE.md`, not duplicated per profile
-- **Agents for tasks, not personas** — agents are scoped to discrete, parallelizable jobs (reviewing, testing, auditing) where subprocess isolation is a benefit
+- **Agents are self-contained** — each domain agent includes full engineering standards + domain expertise, since agents run as isolated subprocesses without access to `CLAUDE.md`
+- **`CLAUDE.md` is slim** — only sets interaction preferences (working approach, communication style) for the main session
+- **`base/standards.md` is the source** — engineering standards live here as a repo-internal reference, embedded into each agent file
+- **All domains available at once** — `--all` installs every domain agent; no switching needed
 
 ## Available Profiles
 
-- **ai-connectors** — FastAPI, Python async, AI API patterns, Docker, GCP
-- **nestjs-backend** — NestJS modules, Prisma, PostgreSQL, Jest
-- **gcp-cloudops** — GCP services, Terraform, CI/CD, networking, IAM, monitoring
-- **performance-engineering** — Python/Node.js profiling, USE/RED methods, concurrency, HA
-- **vue-frontend** — Vue 3 Composition API, TypeScript, Pinia, Vue Router, SOLID
+| Profile | Domain Agent | Description |
+|---------|-------------|-------------|
+| `ai-connectors` | `ai-connector-engineer` | FastAPI, Python async, AI API patterns, Docker, GCP |
+| `nestjs-backend` | `nestjs-engineer` | NestJS modules, Prisma, PostgreSQL, Jest |
+| `gcp-cloudops` | `gcp-cloudops-engineer` | GCP services, Terraform, CI/CD, networking, IAM, monitoring |
+| `performance-engineering` | `performance-engineer` | Python/Node.js profiling, USE/RED methods, concurrency, HA |
+| `vue-frontend` | `vue-engineer` | Vue 3 Composition API, TypeScript, Pinia, Vue Router, SOLID |
 
 ## Commands
 
 ```bash
-./install.sh <profile>      # Install a profile
-./uninstall.sh              # Remove the active profile
-./new-profile.sh <name>     # Scaffold a new profile
+./install.sh --all          # Install base + ALL profiles (recommended)
+./install.sh <profile>      # Install base + a single profile
+./uninstall.sh              # Remove the active installation
+./new-profile.sh <name>     # Scaffold a new profile with template agent
 ```
