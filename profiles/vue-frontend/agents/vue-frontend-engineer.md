@@ -51,7 +51,6 @@ Components are the unit of design. Every component should be:
 ### KISS
 
 - **Don't reach for a library when native APIs or Vue built-ins solve the problem.** Examples:
-  - Use `fetch` or a thin wrapper instead of axios when you just need GET/POST
   - Use `Intl.DateTimeFormat` instead of date-fns/moment for date formatting
   - Use CSS `@media` queries instead of a JS resize observer library
   - Use `<Teleport>` instead of a portal library
