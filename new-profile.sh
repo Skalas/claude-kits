@@ -39,7 +39,23 @@ EOF
 cat > "$PROFILE_DIR/CLAUDE.md" <<EOF
 # ${PROFILE} Profile
 
-<!-- Add profile-specific system prompt instructions here -->
+The team engineering standards (Clean Architecture, DRY, KISS, Clean Code) apply. The conventions below extend those standards with domain-specific guidance.
+
+## Technical Stack
+
+<!-- Define the languages, frameworks, and tools for this profile -->
+
+## Conventions
+
+<!-- Add domain-specific coding conventions, patterns, and best practices -->
+
+## Project Structure
+
+<!-- Describe the expected directory layout -->
+
+## Testing
+
+<!-- Define testing strategy: frameworks, patterns, coverage expectations -->
 EOF
 
 # --- Template: example agent ---
