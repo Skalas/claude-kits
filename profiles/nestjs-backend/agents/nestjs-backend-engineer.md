@@ -161,109 +161,23 @@ src/
 
 Seeders populate the database with initial, development, or test data. They are critical for reproducible environments.
 
-### Seeder Architecture
-
-```typescript
-// prisma/seeders/role.seeder.ts
-export class RoleSeeder {
-  constructor(private readonly prisma: PrismaClient) {}
-
-  async run(): Promise<void> {
-    const roles = [
-      { name: 'ADMIN', description: 'Full system access' },
-      { name: 'USER', description: 'Standard user access' },
-      { name: 'VIEWER', description: 'Read-only access' },
-    ];
-
-    for (const role of roles) {
-      await this.prisma.role.upsert({
-        where: { name: role.name },
-        update: {},
-        create: role,
-      });
-    }
-  }
-}
-```
-
 ### Seeder Principles
 
 - **Idempotent**: Seeders must be safe to run multiple times. Use `upsert` or check-before-insert, never blind `create`
-- **Ordered**: Define explicit execution order in the seeder registry. Respect foreign key dependencies (seed roles before users)
-- **Environment-aware**: Distinguish between data needed in all environments (reference data: roles, permissions, statuses) and dev-only data (test users, sample records). Use an environment flag:
-  ```typescript
-  if (process.env.SEED_ENV !== 'production') {
-    await new TestUserSeeder(prisma).run();
-  }
-  ```
-- **Factories for volume**: Use factory functions to generate realistic records for development and testing. Use libraries like `@faker-js/faker` for realistic names, emails, etc.
+- **Ordered**: Define explicit execution order in a seeder registry. Respect foreign key dependencies (seed roles before users)
+- **Environment-aware**: Distinguish between reference data (roles, permissions, statuses — all environments) and dev-only data (test users, sample records). Gate dev data behind `SEED_ENV`
 - **Transactional**: Wrap each seeder in a transaction so a failure doesn't leave partial data
-- **Logged**: Each seeder should log what it created/updated so you can verify the result
-
-### Seeder Entrypoint
-
-```typescript
-// prisma/seed.ts
-import { PrismaClient } from '@prisma/client';
-import { RoleSeeder } from './seeders/role.seeder';
-import { UserSeeder } from './seeders/user.seeder';
-
-const prisma = new PrismaClient();
-
-async function main() {
-  // Reference data (all environments)
-  await new RoleSeeder(prisma).run();
-
-  // Development/test data
-  if (process.env.SEED_ENV !== 'production') {
-    await new UserSeeder(prisma).run();
-  }
-}
-
-main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(() => prisma.$disconnect());
-```
-
-Configure in `package.json`:
-```json
-{
-  "prisma": {
-    "seed": "ts-node prisma/seed.ts"
-  }
-}
-```
-
-Run with `npx prisma db seed`.
+- **Logged**: Each seeder should log what it created/updated for verification
+- **One class per seeder**: Each seeder handles one model/concept, injected with `PrismaClient`, exposing a single `run()` method
+- **Entrypoint**: `prisma/seed.ts` orchestrates seeders in dependency order. Configure via `prisma.seed` in `package.json`, run with `npx prisma db seed`
 
 ### Factory Pattern
 
-```typescript
-// prisma/seeders/factories/user.factory.ts
-import { faker } from '@faker-js/faker';
-import { Prisma } from '@prisma/client';
-
-export function buildUser(overrides?: Partial<Prisma.UserCreateInput>): Prisma.UserCreateInput {
-  return {
-    email: faker.internet.email(),
-    name: faker.person.fullName(),
-    password: faker.internet.password({ length: 12 }),
-    ...overrides,
-  };
-}
-
-export function buildUsers(count: number, overrides?: Partial<Prisma.UserCreateInput>): Prisma.UserCreateInput[] {
-  return Array.from({ length: count }, () => buildUser(overrides));
-}
-```
-
-- Factories return plain objects matching `Prisma.XxxCreateInput` types
-- Accept partial overrides for test-specific values
+- Use factory functions that return `Prisma.XxxCreateInput` objects for generating realistic test data
+- Accept partial overrides so tests can pin specific values while randomizing the rest
+- Use `@faker-js/faker` for realistic names, emails, dates
 - Keep factories pure — no database calls, just data construction
-- Use factories in both seeders and tests for consistency
+- Reuse factories in both seeders and tests for consistency
 
 ## PostgreSQL Best Practices
 
