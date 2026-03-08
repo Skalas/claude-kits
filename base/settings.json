@@ -1,4 +1,22 @@
 {
-  "agentGroups": {},
+  "agentGroups": {
+    "quality": {
+      "description": "Code quality agents: review, test, refactor, security",
+      "agents": [
+        "code-reviewer",
+        "test-generator",
+        "refactorer",
+        "security-auditor"
+      ]
+    },
+    "ops": {
+      "description": "Operations agents: dependency audit, migration planning, documentation",
+      "agents": [
+        "dependency-auditor",
+        "migration-planner",
+        "documentation-writer"
+      ]
+    }
+  },
   "hooks": {}
 }

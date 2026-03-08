@@ -65,10 +65,11 @@ profiles/<name>/             # Domain-specific profiles
 ### What goes where
 
 - **`base/CLAUDE.md`** — Interaction preferences for the main Claude session. Slim — just working approach and communication style.
-- **`base/standards.md`** — Full engineering standards (Clean Architecture, DRY, KISS, Clean Code). Repo-internal reference embedded into each agent file. Not installed to `~/.claude/`.
+- **`base/standards.md`** — Single source of truth for engineering standards. Injected into agents via `{{STANDARDS}}` placeholder at install time. Not installed to `~/.claude/` directly.
 - **`profiles/<name>/CLAUDE.md`** — Domain expertise source material. Used to compose the domain agent file. Not appended to `~/.claude/CLAUDE.md`.
-- **`profiles/<name>/agents/`** — Self-contained domain agent with engineering standards + domain expertise baked in. Agents run as isolated subprocesses, so they need everything inline.
-- **`base/agents/`** — Task-oriented agents for discrete jobs (reviewing code, generating tests, auditing deps).
+- **`profiles/<name>/agents/`** — Domain agent with `{{STANDARDS}}` placeholder + domain expertise. Agents run as isolated subprocesses, so standards are injected at install time.
+- **`profiles/<name>/commands/`** — Profile-specific slash commands that leverage the domain agent.
+- **`base/agents/`** — Task-oriented agents for discrete jobs (reviewing, testing, security, refactoring, docs, migrations, deps).
 - **`base/commands/`** — Slash commands that orchestrate agents or git operations.
 
 ### How installation works
@@ -88,6 +89,10 @@ Agents run as isolated subprocesses. They don't inherit `~/.claude/CLAUDE.md` co
 - Domain expertise is always available to the agent, not dependent on which profile is "active"
 - All domain agents can be installed simultaneously with `--all`
 
+### Standards injection ({{STANDARDS}} template)
+
+Agent `.md` files use `{{STANDARDS}}` as a placeholder instead of duplicating the standards block. During `install.sh`, this placeholder is replaced with the contents of `base/standards.md`. This keeps standards in one place — edit `base/standards.md` and re-run install to update all agents.
+
 ## Shared Task Agents
 
 These agents are available in every installation:
@@ -97,10 +102,14 @@ These agents are available in every installation:
 | `code-reviewer` | Reviews diffs for quality issues. Returns structured findings (blocker/warning/suggestion) |
 | `test-generator` | Generates tests for source files following Arrange-Act-Assert |
 | `dependency-auditor` | Audits dependency manifests for unused, heavy, or vulnerable packages |
+| `security-auditor` | Audits code for OWASP Top 10, hardcoded secrets, injection risks, insecure configs |
+| `documentation-writer` | Generates or updates READMEs, API docs, ADRs, and module documentation |
+| `refactorer` | Identifies code smells, complexity hotspots, and recommends specific refactorings |
+| `migration-planner` | Plans database migrations, dependency upgrades, and framework transitions |
 
 ## Slash Commands
 
-These commands are available in every installation:
+### Base Commands (all installations)
 
 | Command | Description |
 |---------|-------------|
@@ -108,6 +117,21 @@ These commands are available in every installation:
 | `/explain <path>` | Explain the architecture and purpose of a file or module |
 | `/audit-deps` | Audit project dependencies |
 | `/standup` | Generate a standup summary from recent git activity |
+| `/commit` | Generate a conventional commit message from staged changes |
+| `/refactor <path>` | Identify refactoring opportunities in a file or module |
+| `/security [path]` | Run a security audit on a file, module, or staged changes |
+| `/doc <path>` | Generate or update documentation for a file or module |
+| `/todo` | Scan codebase for TODO/FIXME/HACK comments and prioritize them |
+
+### Profile-Specific Commands
+
+| Command | Profile | Description |
+|---------|---------|-------------|
+| `/generate-module <name>` | nestjs-backend | Scaffold a NestJS feature module with clean architecture layers |
+| `/create-component <name>` | vue-frontend | Scaffold a Vue 3 component with TypeScript and tests |
+| `/tf-plan` | gcp-cloudops | Review a Terraform plan for risks and best practices |
+| `/api-design <endpoint>` | ai-connectors | Design or review a FastAPI endpoint for AI connectors |
+| `/profile <path>` | performance-engineering | Analyze code for performance issues using USE/RED methods |
 
 ## Creating a New Profile
 
@@ -126,7 +150,7 @@ profiles/my-profile/
   └── CLAUDE.md                    # Domain conventions source
 ```
 
-The generated agent includes the full engineering standards section. Fill in the domain-specific sections (Technical Stack, Conventions) and customize the agent description and role statement.
+The generated agent uses the `{{STANDARDS}}` placeholder — standards are injected at install time from `base/standards.md`. Fill in the domain-specific sections (Technical Stack, Conventions) and customize the agent description and role statement.
 
 ## Uninstalling
 

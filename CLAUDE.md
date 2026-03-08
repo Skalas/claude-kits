@@ -34,7 +34,7 @@ You can also install a single profile with `install.sh <profile>` if preferred.
 
 - **Agents are self-contained** — each domain agent includes full engineering standards + domain expertise, since agents run as isolated subprocesses without access to `CLAUDE.md`
 - **`CLAUDE.md` is slim** — only sets interaction preferences (working approach, communication style) for the main session
-- **`base/standards.md` is the source** — engineering standards live here as a repo-internal reference, embedded into each agent file
+- **`base/standards.md` is the single source** — engineering standards live here once; agents use `{{STANDARDS}}` placeholder, and `install.sh` injects the content at install time
 - **All domains available at once** — `--all` installs every domain agent; no switching needed
 
 ## Available Profiles
@@ -46,6 +46,13 @@ You can also install a single profile with `install.sh <profile>` if preferred.
 | `gcp-cloudops` | `gcp-cloudops-engineer` | GCP services, Terraform, CI/CD, networking, IAM, monitoring |
 | `performance-engineering` | `performance-engineer` | Python/Node.js profiling, USE/RED methods, concurrency, HA |
 | `vue-frontend` | `vue-engineer` | Vue 3 Composition API, TypeScript, Pinia, Vue Router, SOLID |
+
+## Agent Template System
+
+Agent `.md` files use `{{STANDARDS}}` as a placeholder for engineering standards. At install time, `install.sh` replaces this placeholder with the contents of `base/standards.md`. This means:
+- Standards are defined once in `base/standards.md`
+- All agents stay in sync automatically
+- To update standards, edit `base/standards.md` and re-run `install.sh`
 
 ## Commands
 

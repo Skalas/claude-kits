@@ -76,6 +76,24 @@ echo ""
 INSTALLED_AGENTS=()
 INSTALLED_COMMANDS=()
 
+# --- Load standards for injection into agents ---
+STANDARDS_FILE="$SCRIPT_DIR/base/standards.md"
+if [ ! -f "$STANDARDS_FILE" ]; then
+  echo "Error: standards.md not found at $STANDARDS_FILE"
+  exit 1
+fi
+
+# Function to copy an agent file, injecting standards at {{STANDARDS}} placeholder
+install_agent() {
+  local src="$1"
+  local dest="$2"
+  if grep -qF '{{STANDARDS}}' "$src"; then
+    awk 'NR==FNR{standards=standards (NR>1?"\n":"") $0; next} {gsub(/\{\{STANDARDS\}\}/, standards); print}' "$STANDARDS_FILE" "$src" > "$dest"
+  else
+    cp "$src" "$dest"
+  fi
+}
+
 # --- Merge settings.json (base + all profiles → existing user config) ---
 MERGED_SETTINGS=$(cat "$SCRIPT_DIR/base/settings.json")
 
@@ -102,7 +120,7 @@ if [ -d "$SCRIPT_DIR/base/agents" ]; then
   for agent in "$SCRIPT_DIR/base/agents"/*.md; do
     [ -f "$agent" ] || continue
     BASENAME=$(basename "$agent")
-    cp "$agent" "$AGENTS_DIR/$BASENAME"
+    install_agent "$agent" "$AGENTS_DIR/$BASENAME"
     INSTALLED_AGENTS+=("$BASENAME")
     echo "  [ok] Installed base agent: $BASENAME"
   done
@@ -127,7 +145,7 @@ for p in "${PROFILES[@]}"; do
     for agent in "$pdir/agents"/*.md; do
       [ -f "$agent" ] || continue
       BASENAME=$(basename "$agent")
-      cp "$agent" "$AGENTS_DIR/$BASENAME"
+      install_agent "$agent" "$AGENTS_DIR/$BASENAME"
       INSTALLED_AGENTS+=("$BASENAME")
       echo "  [ok] Installed $p agent: $BASENAME"
     done
