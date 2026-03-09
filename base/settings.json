@@ -1,4 +1,16 @@
 {
+  "permissions": {
+    "allow": [
+      "Read",
+      "Glob",
+      "Grep",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git status *)",
+      "Bash(git branch *)",
+      "Bash(git show *)"
+    ]
+  },
   "agentGroups": {
     "quality": {
       "description": "Code quality agents: review, test, refactor, security",
@@ -18,5 +30,17 @@
       ]
     }
   },
-  "hooks": {}
+  "hooks": {
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "which osascript >/dev/null 2>&1 && osascript -e 'display notification \"Claude Code needs attention\" with title \"Claude Code\"' || true"
+          }
+        ]
+      }
+    ]
+  }
 }

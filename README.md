@@ -133,6 +133,28 @@ These agents are available in every installation:
 | `/api-design <endpoint>` | ai-connectors | Design or review a FastAPI endpoint for AI connectors |
 | `/profile <path>` | performance-engineering | Analyze code for performance issues using USE/RED methods |
 
+## Performance Optimizations
+
+### LSP Servers
+
+Each profile agent will check for and install the appropriate LSP server as part of project setup. Install them upfront for instant code navigation:
+
+| Profile | Install |
+|---------|---------|
+| `ai-connectors` | `pip install pyright` |
+| `nestjs-backend` | `npm install -g typescript-language-server typescript` |
+| `vue-frontend` | `npm install -g @vue/language-server typescript-language-server typescript` |
+| `gcp-cloudops` | `brew install hashicorp/tap/terraform-ls` |
+| `performance-engineering` | `pip install pyright && npm install -g typescript-language-server typescript` |
+
+### Included Settings
+
+The base `settings.json` ships with:
+
+- **Permission auto-approvals** for read-only tools and safe git commands — eliminates confirmation prompts for non-destructive operations
+- **macOS notifications** — desktop alert when Claude Code needs attention
+- **Agent groups** — `quality` (review, test, refactor, security) and `ops` (deps, migration, docs)
+
 ## Creating a New Profile
 
 ```bash

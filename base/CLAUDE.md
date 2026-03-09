@@ -14,3 +14,9 @@
 - When trade-offs exist, state them and recommend the simpler option unless complexity is justified
 - Flag potential issues proactively — don't wait to be asked
 - If requirements are ambiguous, state your assumptions and proceed
+
+## Development Environment
+
+- When scaffolding or setting up a project, check that the appropriate LSP server for the project's language is installed. If not, install it as part of the dev environment setup.
+- LSP servers enable instant code navigation (go-to-definition, find-references, call hierarchy) and catch type errors immediately after edits.
+- Use the LSP tool for code navigation when available — prefer it over grep-based searching for finding definitions, references, and call hierarchies.

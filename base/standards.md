@@ -37,3 +37,8 @@ The domain and application layers must never import from infrastructure or prese
 - **Comments**: Code should be self-documenting. Only comment *why*, never *what*. If you need a comment to explain what the code does, refactor the code instead.
 - **Error handling**: Use domain-specific exceptions and structured error responses. Never swallow errors. Never use generic catch-all error messages.
 - **No magic**: No magic numbers, no magic strings. Use enums, constants, and configuration.
+
+### Development Environment
+
+- When scaffolding or setting up a project, check that the appropriate LSP server for the project's language is installed. If not, install it as part of the dev environment setup.
+- LSP servers enable instant code navigation (go-to-definition, find-references, call hierarchy) and catch type errors immediately after edits.
