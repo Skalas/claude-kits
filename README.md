@@ -79,7 +79,7 @@ When you run `./install.sh --all`:
 1. **Settings** — all `settings.json` files are deep-merged into `~/.claude/settings.json`. A backup is saved.
 2. **Agents** — all `.md` files from `base/agents/` and every `profiles/*/agents/` are copied to `~/.claude/agents/`.
 3. **Commands** — all command files are copied to `~/.claude/commands/`.
-4. **CLAUDE.md** — only `base/CLAUDE.md` (interaction preferences) is appended to `~/.claude/CLAUDE.md`.
+4. **CLAUDE.md** — `base/CLAUDE.md` (standards + interaction preferences, with `{{STANDARDS}}` injected) is appended to `~/.claude/CLAUDE.md`.
 5. **Manifest** — tracks everything installed for clean uninstall.
 
 ### Why agents are self-contained

@@ -169,10 +169,16 @@ CLAUDE_MD_MARKER="# --- claude-profiles: $PROFILE_LABEL ---"
 {
   echo ""
   echo "$CLAUDE_MD_MARKER"
-  [ -f "$SCRIPT_DIR/base/CLAUDE.md" ] && cat "$SCRIPT_DIR/base/CLAUDE.md"
+  if [ -f "$SCRIPT_DIR/base/CLAUDE.md" ]; then
+    if grep -qF '{{STANDARDS}}' "$SCRIPT_DIR/base/CLAUDE.md"; then
+      awk 'NR==FNR{standards=standards (NR>1?"\n":"") $0; next} {gsub(/\{\{STANDARDS\}\}/, standards); print}' "$STANDARDS_FILE" "$SCRIPT_DIR/base/CLAUDE.md"
+    else
+      cat "$SCRIPT_DIR/base/CLAUDE.md"
+    fi
+  fi
   echo "# --- end claude-profiles ---"
 } >> "$CLAUDE_MD"
-echo "  [ok] Appended CLAUDE.md (interaction preferences only)"
+echo "  [ok] Appended CLAUDE.md (standards + interaction preferences)"
 
 # --- Write manifest ---
 {

@@ -25,7 +25,7 @@ profiles/<name>/       # Domain-specific profiles
 1. Deep-merges `base/settings.json` + all `profiles/*/settings.json` into `~/.claude/settings.json`
 2. Copies agents from `base/agents/` and all `profiles/*/agents/` — all domain agents available simultaneously
 3. Copies commands from `base/commands/` and all `profiles/*/commands/`
-4. Appends `base/CLAUDE.md` (interaction preferences only) to `~/.claude/CLAUDE.md`
+4. Appends `base/CLAUDE.md` (standards + interaction preferences, with `{{STANDARDS}}` injected) to `~/.claude/CLAUDE.md`
 5. Writes a manifest to `~/.claude/.installed-profile` for clean uninstall
 
 You can also install a single profile with `install.sh <profile>` if preferred.
