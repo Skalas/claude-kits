@@ -15,7 +15,12 @@ You are entering **planning mode**. Do NOT write code. Your job is to review the
    git stash list
    ```
 3. Read CLAUDE.md and any architecture docs to understand existing patterns.
-4. Identify existing code that partially solves sub-problems — use the `Explore` agent if the codebase is unfamiliar.
+4. **Codebase audit** — Launch the `Explore` agent to find existing code that partially or fully solves sub-problems. Specifically ask it to:
+   - Search for modules, services, or utilities related to the feature being planned
+   - Identify established patterns the new code should follow
+   - Find existing tests that cover adjacent functionality
+
+   This prevents rebuilding what already exists and ensures the plan fits the codebase.
 
 ## Step 2: Premise Challenge
 
