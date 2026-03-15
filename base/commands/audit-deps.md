@@ -5,8 +5,29 @@ description: "Audit project dependencies for unused, heavy, or vulnerable packag
 
 Audit the project's dependencies for issues.
 
-## Steps
+## Step 1: Find manifests
 
-1. Find dependency manifests in the project: `package.json`, `requirements.txt`, `pyproject.toml`, or similar.
-2. Launch the `dependency-auditor` agent with the manifest files and relevant source code.
-3. Present the categorized findings to the user with actionable recommendations.
+Search for dependency manifests:
+- Node.js: `package.json`, `package-lock.json`, `bun.lock`
+- Python: `requirements.txt`, `pyproject.toml`, `Pipfile`, `uv.lock`
+- Rust: `Cargo.toml`
+- Go: `go.mod`
+- Ruby: `Gemfile`
+
+Also run the native audit tool if available:
+```bash
+npm audit --json 2>/dev/null || pip audit --format=json 2>/dev/null || cargo audit --json 2>/dev/null || true
+```
+
+## Step 2: Analyze
+
+Launch the `dependency-auditor` agent with:
+- The manifest files
+- The native audit output (if any)
+- Key source directories (for import verification)
+
+## Step 3: Present
+
+Present findings ordered by actionability: unused (easy wins first), then security (most urgent), then heavy/duplicates/version.
+
+Include a summary line: `Dependency Audit: N findings (X to remove, Y security, Z to replace)`
