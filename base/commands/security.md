@@ -5,10 +5,39 @@ description: "Run a security audit on a file, module, or the whole project"
 
 Run a security audit on the specified target.
 
-## Steps
+## Step 1: Determine scope
 
-1. Determine the target:
-   - If the user specified a file or directory (e.g., `/security src/auth`), read those files.
-   - If no argument was given, check for staged changes with `git diff --cached`. If there are staged changes, audit those. Otherwise, identify key entry points (routes, controllers, middleware) and audit those.
-2. Launch the `security-auditor` agent with the relevant source files.
-3. Present the findings to the user, ordered by severity (critical first), with remediation steps.
+- If the user specified a file or directory (e.g., `/security src/auth`), read those files.
+- If no argument was given, determine scope automatically:
+  1. Check for staged changes (`git diff --cached`). If present, audit those.
+  2. Otherwise, identify key attack surface: routes, controllers, middleware, auth modules, API endpoints. Use the `Explore` agent if the codebase is unfamiliar.
+
+Also gather context:
+```bash
+# Check for .env files that might be committed
+git ls-files | grep -i '\.env' || true
+# Check for common security config
+ls -la .gitignore Dockerfile docker-compose* 2>/dev/null || true
+```
+
+## Step 2: Audit
+
+Launch the `security-auditor` agent with:
+- The source files to audit
+- Any configuration files (Dockerfiles, CI pipelines, IAM configs)
+- The `.gitignore` file (to check if sensitive files are excluded)
+
+## Step 3: Present
+
+Present findings ordered by severity (critical first). For each finding, include the specific remediation with code examples.
+
+Include a summary line: `Security Audit: N findings (X critical, Y high, Z medium)`
+
+If critical findings exist, use AskUserQuestion for each: A) Fix now B) Acknowledge C) False positive.
+
+## Rules
+
+- **Real threats only.** Don't flag theoretical risks with no attack vector in the deployment context.
+- **One issue per AskUserQuestion.** Never batch multiple critical findings into one question.
+- **Read-only by default.** Only modify files if the user chooses "Fix now."
+- **Include remediation.** Every finding must have a specific fix, not just "this is bad."
