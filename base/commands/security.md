@@ -34,3 +34,10 @@ Present findings ordered by severity (critical first). For each finding, include
 Include a summary line: `Security Audit: N findings (X critical, Y high, Z medium)`
 
 If critical findings exist, use AskUserQuestion for each: A) Fix now B) Acknowledge C) False positive.
+
+## Rules
+
+- **Real threats only.** Don't flag theoretical risks with no attack vector in the deployment context.
+- **One issue per AskUserQuestion.** Never batch multiple critical findings into one question.
+- **Read-only by default.** Only modify files if the user chooses "Fix now."
+- **Include remediation.** Every finding must have a specific fix, not just "this is bad."

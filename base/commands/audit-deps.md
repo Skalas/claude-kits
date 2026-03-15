@@ -31,3 +31,10 @@ Launch the `dependency-auditor` agent with:
 Present findings ordered by actionability: unused (easy wins first), then security (most urgent), then heavy/duplicates/version.
 
 Include a summary line: `Dependency Audit: N findings (X to remove, Y security, Z to replace)`
+
+## Rules
+
+- **Verify before flagging unused.** A package may be a CLI tool, Babel plugin, or implicit dependency. Check scripts, config files, and build tooling.
+- **Don't flag dev deps for size.** Dev dependencies don't ship to production.
+- **Recommend specific alternatives.** "Replace moment with Intl.DateTimeFormat" not "consider a lighter option."
+- **Read-only.** Present findings — don't remove or modify dependencies without user confirmation.
