@@ -1,19 +1,34 @@
 ---
 name: analyze
-description: "Analyze data files in a directory. Profiles datasets, answers questions, computes statistics, and generates visualizations. Supports CSV, Excel, JSON, and PDF."
+description: "Reproducible data analysis pipeline. Translates source files to machine-friendly formats, generates analysis plans, produces runnable scripts, and tracks progress. Supports CSV, Excel, JSON, and PDF."
 ---
 
-Analyze data files and answer questions about them.
+Run a reproducible data analysis pipeline. All work is saved as files — translated data, analysis plans, scripts, and outputs — so the analysis can be resumed, re-run, and audited.
 
-## Step 1: Determine the target
+## Step 1: Determine the target and check for existing analysis
 
-- If the user specified a path (e.g., `/analyze data/sales/`), use that.
-- If no path given, look for common data directories: `data/`, `datasets/`, `analysis/`, or the current directory.
-- If a specific question was asked (e.g., `/analyze data/ what's the trend in revenue?`), pass both the path and the question to the agent.
+- If the user specified a path (e.g., `/analyze data/sales/`), use that as the source.
+- If no path given, look for common data directories: `data/`, `datasets/`, or the current directory.
+- If a specific question was asked (e.g., `/analyze data/ what's the trend in revenue?`), note the question for the plan.
+
+Check for an existing analysis workspace:
+
+```bash
+if [ -d "analysis" ] && [ -f "analysis/status.json" ]; then
+  echo "EXISTING_ANALYSIS"
+  cat analysis/status.json
+else
+  echo "NEW_ANALYSIS"
+fi
+```
+
+**If `EXISTING_ANALYSIS`:** Read `analysis/status.json` to understand what's done and what's pending. Present the status to the user and ask whether to continue from where we left off or start fresh.
+
+**If `NEW_ANALYSIS`:** Continue to Step 2.
 
 ## Step 2: Set up virtual environment
 
-Check if a `.venv-analyst` virtual environment already exists in the project root:
+Check if `.venv-analyst` exists:
 
 ```bash
 if [ -d ".venv-analyst" ]; then
@@ -35,69 +50,50 @@ source .venv-analyst/bin/activate
 pip install pandas matplotlib seaborn
 ```
 
-If the target includes PDF files, also install PDF support:
-```bash
-pip install pdfplumber
-```
+Conditionally install based on source file types:
+- PDF files present → `pip install pdfplumber`
+- Excel files present → `pip install openpyxl`
 
-If the target includes Excel files (.xlsx, .xls), also install Excel support:
-```bash
-pip install openpyxl
-```
-
-**If `VENV_EXISTS`:** Activate it and verify packages:
-
-```bash
-source .venv-analyst/bin/activate
-python3 -c "import pandas; print(f'pandas {pandas.__version__}')" 2>/dev/null || echo "MISSING: pandas"
-python3 -c "import matplotlib; print(f'matplotlib {matplotlib.__version__}')" 2>/dev/null || echo "MISSING: matplotlib"
-python3 -c "import seaborn; print(f'seaborn {seaborn.__version__}')" 2>/dev/null || echo "MISSING: seaborn"
-python3 -c "import pdfplumber; print(f'pdfplumber {pdfplumber.__version__}')" 2>/dev/null || echo "OPTIONAL: pdfplumber (needed for PDF tables)"
-python3 -c "import openpyxl; print(f'openpyxl {openpyxl.__version__}')" 2>/dev/null || echo "OPTIONAL: openpyxl (needed for Excel files)"
-```
-
-If any required package is missing, install it into the existing venv (no need to ask — the user already approved the venv).
-
-**Important:** Ensure `.venv-analyst` is in `.gitignore`. If not:
+Ensure `.venv-analyst` is in `.gitignore`:
 ```bash
 grep -q '.venv-analyst' .gitignore 2>/dev/null || echo '.venv-analyst/' >> .gitignore
 ```
 
-## Step 3: Discover data files
+**If `VENV_EXISTS`:** Activate and install any missing required packages silently.
+
+## Step 3: Create workspace and launch agent
+
+Create the analysis workspace structure:
 
 ```bash
-find <target_path> -type f \( -name "*.csv" -o -name "*.tsv" -o -name "*.xlsx" -o -name "*.xls" -o -name "*.json" -o -name "*.jsonl" -o -name "*.pdf" \) | head -50
+mkdir -p analysis/{data,scripts,outputs,logs}
 ```
 
-If no data files found, tell the user and stop.
-
-If many files found (>10), present a summary and ask if the user wants to analyze all of them or a subset.
-
-## Step 4: Launch analyst
-
 Launch the `data-analyst` agent with:
-- The data file paths
+- The source file paths
 - The user's question (or "profile and explore this data" if no specific question)
-- Note if any Python packages are missing (so the agent can work around them)
+- The analysis workspace path (`analysis/`)
+- Whether this is a new or resumed analysis
 
-## Step 5: Present results
+The agent handles the three-phase pipeline: translate → plan → script.
 
-The agent will return:
-- Data profile (shape, columns, types, quality issues)
-- Analysis with code-backed findings
-- Visualizations saved as PNG files in `/tmp/`
-- Key findings and suggested next questions
+## Step 4: Present results
 
-Present the results. For any PNG files generated, read them so they're visible in the conversation.
+The agent will produce files in the `analysis/` workspace. Present:
+- Summary of translated files (`analysis/data/`)
+- The analysis plan (`analysis/plan.md`)
+- Generated scripts (`analysis/scripts/`)
+- Any outputs and charts (`analysis/outputs/`)
+- Current status (`analysis/status.json`)
 
-If the user asks follow-up questions, resume the agent with the new question — it retains the data context.
+For any PNG files generated, read them so they're visible in the conversation.
+
+If the analysis is partially complete, tell the user what's done and what remains.
 
 ## Rules
 
-- **Never install packages without asking first.** The initial venv creation needs user confirmation. After that, missing packages in an existing venv can be installed automatically.
+- **Never install packages without asking first.** The initial venv creation needs user confirmation.
 - **Always use the venv.** Every Python command runs inside `.venv-analyst`. Never install into the system Python.
-- **Keep .venv-analyst out of git.** Ensure it's in `.gitignore`.
-- **Handle large datasets gracefully.** If a file is >100MB, note it and let the agent decide whether to sample.
-- **PDF data requires inspection.** Warn the user that PDF extraction is imperfect — tables may need manual cleanup.
-- **Follow-up questions reuse context.** Don't re-profile the data on every question — resume the agent.
-- **Charts go to /tmp/.** Don't write files into the user's project directory unless asked.
+- **Everything goes to `analysis/`.** Data, plans, scripts, outputs — all in the workspace. Nothing ephemeral.
+- **Scripts must be re-runnable.** Anyone can `cd analysis && source ../.venv-analyst/bin/activate && python scripts/01_profile.py` and get the same results.
+- **Resume, don't restart.** Check `status.json` before redoing work.
