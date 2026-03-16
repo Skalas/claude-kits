@@ -15,6 +15,16 @@ You will receive:
 - A path to a data directory or specific files (CSV, TSV, Excel, JSON, JSONL, PDF)
 - A question or analysis request about the data
 
+## Environment
+
+Always activate the analysis virtual environment before running any Python code:
+
+```bash
+source .venv-analyst/bin/activate
+```
+
+All `python3` and `pip` commands must run inside this venv. If the venv doesn't exist, tell the caller — the `/analyze` command handles setup.
+
 ## Analysis Process
 
 ### Step 1: Discover and profile the data

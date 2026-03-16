@@ -11,19 +11,57 @@ Analyze data files and answer questions about them.
 - If no path given, look for common data directories: `data/`, `datasets/`, `analysis/`, or the current directory.
 - If a specific question was asked (e.g., `/analyze data/ what's the trend in revenue?`), pass both the path and the question to the agent.
 
-## Step 2: Verify Python environment
+## Step 2: Set up virtual environment
+
+Check if a `.venv-analyst` virtual environment already exists in the project root:
 
 ```bash
+if [ -d ".venv-analyst" ]; then
+  echo "VENV_EXISTS"
+  source .venv-analyst/bin/activate
+  python3 --version
+else
+  echo "VENV_MISSING"
+fi
+```
+
+**If `VENV_MISSING`:** Ask the user: "Data analysis needs a Python virtual environment with pandas, matplotlib, seaborn (and optionally pdfplumber for PDFs and openpyxl for Excel). Create `.venv-analyst` and install packages?"
+
+Stop and wait for confirmation. Then:
+
+```bash
+python3 -m venv .venv-analyst
+source .venv-analyst/bin/activate
+pip install pandas matplotlib seaborn
+```
+
+If the target includes PDF files, also install PDF support:
+```bash
+pip install pdfplumber
+```
+
+If the target includes Excel files (.xlsx, .xls), also install Excel support:
+```bash
+pip install openpyxl
+```
+
+**If `VENV_EXISTS`:** Activate it and verify packages:
+
+```bash
+source .venv-analyst/bin/activate
 python3 -c "import pandas; print(f'pandas {pandas.__version__}')" 2>/dev/null || echo "MISSING: pandas"
 python3 -c "import matplotlib; print(f'matplotlib {matplotlib.__version__}')" 2>/dev/null || echo "MISSING: matplotlib"
 python3 -c "import seaborn; print(f'seaborn {seaborn.__version__}')" 2>/dev/null || echo "MISSING: seaborn"
 python3 -c "import pdfplumber; print(f'pdfplumber {pdfplumber.__version__}')" 2>/dev/null || echo "OPTIONAL: pdfplumber (needed for PDF tables)"
+python3 -c "import openpyxl; print(f'openpyxl {openpyxl.__version__}')" 2>/dev/null || echo "OPTIONAL: openpyxl (needed for Excel files)"
 ```
 
-If pandas or matplotlib is missing, ask the user:
-"Data analysis requires Python packages. Install them with `pip install pandas matplotlib seaborn`? (Add `pdfplumber` if working with PDFs.)"
+If any required package is missing, install it into the existing venv (no need to ask — the user already approved the venv).
 
-Stop and wait for confirmation before installing anything.
+**Important:** Ensure `.venv-analyst` is in `.gitignore`. If not:
+```bash
+grep -q '.venv-analyst' .gitignore 2>/dev/null || echo '.venv-analyst/' >> .gitignore
+```
 
 ## Step 3: Discover data files
 
@@ -56,7 +94,9 @@ If the user asks follow-up questions, resume the agent with the new question —
 
 ## Rules
 
-- **Never install packages without asking.** Present what's missing and let the user decide.
+- **Never install packages without asking first.** The initial venv creation needs user confirmation. After that, missing packages in an existing venv can be installed automatically.
+- **Always use the venv.** Every Python command runs inside `.venv-analyst`. Never install into the system Python.
+- **Keep .venv-analyst out of git.** Ensure it's in `.gitignore`.
 - **Handle large datasets gracefully.** If a file is >100MB, note it and let the agent decide whether to sample.
 - **PDF data requires inspection.** Warn the user that PDF extraction is imperfect — tables may need manual cleanup.
 - **Follow-up questions reuse context.** Don't re-profile the data on every question — resume the agent.
