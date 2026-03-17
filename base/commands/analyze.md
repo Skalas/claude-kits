@@ -22,7 +22,21 @@ else
 fi
 ```
 
-**If `EXISTING_ANALYSIS`:** Read `analysis/status.json` to understand what's done and what's pending. Present the status to the user and ask whether to continue from where we left off or start fresh.
+**If `EXISTING_ANALYSIS`:** Read `analysis/status.json` and `analysis/data/README.md` (the manifest). Then determine what the user wants:
+
+1. **New source files detected** — Compare source files against the manifest. If the user pointed to a path with files not in the manifest, this is an **incremental update**. Present:
+   ```
+   Existing analysis found (N files translated, last run: DATE).
+   New files detected: [list new files]
+   Options:
+   A) Add new data to existing analysis (translate new files, re-run pipeline)
+   B) Continue existing analysis from where we left off
+   C) Start fresh (archive current analysis)
+   ```
+
+2. **No new files** — Present status and ask whether to continue or start fresh.
+
+3. **User asked a new question** — Add the question to the existing plan and generate a new script for it.
 
 **If `NEW_ANALYSIS`:** Continue to Step 2.
 

@@ -350,6 +350,103 @@ When `status.json` exists, read it to determine where we left off:
 
 For follow-up questions: add new questions to `plan.md`, generate additional script functions in `03_analysis.py` (or a new `05_followup.py`), run them, and update findings.
 
+## Incremental Data Updates
+
+When new source files are added to an existing analysis:
+
+### Step 1: Identify new files
+
+Compare source files against the manifest (`analysis/data/README.md`). A file is "new" if it appears in the source path but not in the manifest.
+
+```python
+# In 00_translate.py — add incremental support
+existing = set()
+manifest_path = Path("analysis/data/README.md")
+if manifest_path.exists():
+    # Parse manifest table to get already-translated source files
+    for line in manifest_path.read_text().splitlines():
+        if line.startswith("|") and "Source File" not in line and "---" not in line:
+            source = line.split("|")[1].strip()
+            if source:
+                existing.add(source)
+
+new_files = [f for f in source_files if f not in existing]
+print(f"Already translated: {len(existing)} files")
+print(f"New files to translate: {len(new_files)} files")
+```
+
+### Step 2: Translate only new files
+
+Run translation on new files only. Append new entries to the manifest — don't overwrite existing translations.
+
+### Step 3: Archive previous outputs
+
+Before re-running analysis, archive previous results so they're available for comparison:
+
+```bash
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+mkdir -p analysis/outputs/archive/$TIMESTAMP
+cp analysis/outputs/profile.md analysis/outputs/archive/$TIMESTAMP/ 2>/dev/null || true
+cp analysis/outputs/quality.md analysis/outputs/archive/$TIMESTAMP/ 2>/dev/null || true
+cp analysis/outputs/findings.md analysis/outputs/archive/$TIMESTAMP/ 2>/dev/null || true
+cp -r analysis/outputs/charts analysis/outputs/archive/$TIMESTAMP/ 2>/dev/null || true
+```
+
+### Step 4: Re-run the pipeline
+
+Re-run scripts 01 through 04 on the full dataset (existing + new translated files). The scripts read from `analysis/data/` which now includes both old and new files.
+
+### Step 5: Update status and generate delta report
+
+Update `status.json` with the incremental run info:
+
+```json
+{
+  "phase": "scripts",
+  "completed_scripts": ["00_translate.py", "01_profile.py", "02_quality.py", "03_analysis.py", "04_visualize.py"],
+  "pending_scripts": [],
+  "last_run": "2026-03-17T14:30:00",
+  "incremental_runs": [
+    {
+      "date": "2026-03-17T14:30:00",
+      "new_files": ["batch_march.csv"],
+      "previous_archive": "analysis/outputs/archive/20260317_143000"
+    }
+  ]
+}
+```
+
+Generate a delta summary in `analysis/outputs/delta.md`:
+
+```markdown
+# Data Update Delta
+
+## New Data Added
+- batch_march.csv: 5,230 rows, 12 columns
+
+## Impact on Key Metrics
+| Metric | Before | After | Change |
+|--------|--------|-------|--------|
+| Total rows | 45,230 | 50,460 | +5,230 (+11.6%) |
+| Revenue total | $4.2M | $4.8M | +$600K (+14.3%) |
+| Null rate (region) | 3.2% | 2.8% | -0.4pp |
+
+## New Findings
+- [anything that changed significantly with the new data]
+
+## Previous outputs archived at
+analysis/outputs/archive/20260317_143000/
+```
+
+Read the archived findings and current findings to compute the delta automatically.
+
+### Plan updates
+
+If the new data introduces new columns, entities, or patterns not covered by the existing plan:
+1. Append a "## Questions Added (Incremental Update)" section to `plan.md`
+2. Generate additional analysis functions in a new script (e.g., `05_incremental.py`)
+3. Present new questions to the user for review before running
+
 ## Chart Guidelines
 
 - **Always use `matplotlib.use('Agg')`** — non-interactive backend
@@ -383,3 +480,4 @@ For follow-up questions: add new questions to `plan.md`, generate additional scr
 - **Large files:** For files >100MB, sample first for profiling, full computation for final answers.
 - **Interpret, don't just describe.** "Revenue grew 23% QoQ" not "Q2 was $1.2M and Q1 was $975K."
 - **Be honest about limitations.** If the data can't answer the question, say so in findings.md.
+- **Incremental, not destructive.** When new data arrives, translate only new files, archive previous outputs, re-run the full pipeline, and generate a delta report. Never overwrite previous results without archiving first.
