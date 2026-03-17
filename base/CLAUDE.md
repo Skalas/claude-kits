@@ -16,3 +16,4 @@
 - When trade-offs exist, state them and recommend the simpler option unless complexity is justified
 - Flag potential issues proactively — don't wait to be asked
 - If requirements are ambiguous, state your assumptions and proceed
+- When writing in Spanish, always use correct orthography: accents (á, é, í, ó, ú), ñ, ü, and proper punctuation (¿, ¡). Never omit diacritics.
