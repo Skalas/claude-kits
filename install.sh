@@ -88,7 +88,7 @@ install_agent() {
   local src="$1"
   local dest="$2"
   if grep -qF '{{STANDARDS}}' "$src"; then
-    awk 'NR==FNR{standards=standards (NR>1?"\n":"") $0; next} {gsub(/\{\{STANDARDS\}\}/, standards); print}' "$STANDARDS_FILE" "$src" > "$dest"
+    awk 'NR==FNR{gsub(/&/,"\\\\&"); standards=standards (NR>1?"\n":"") $0; next} {gsub(/\{\{STANDARDS\}\}/, standards); print}' "$STANDARDS_FILE" "$src" > "$dest"
   else
     cp "$src" "$dest"
   fi
@@ -171,7 +171,7 @@ CLAUDE_MD_MARKER="# --- claude-profiles: $PROFILE_LABEL ---"
   echo "$CLAUDE_MD_MARKER"
   if [ -f "$SCRIPT_DIR/base/CLAUDE.md" ]; then
     if grep -qF '{{STANDARDS}}' "$SCRIPT_DIR/base/CLAUDE.md"; then
-      awk 'NR==FNR{standards=standards (NR>1?"\n":"") $0; next} {gsub(/\{\{STANDARDS\}\}/, standards); print}' "$STANDARDS_FILE" "$SCRIPT_DIR/base/CLAUDE.md"
+      awk 'NR==FNR{gsub(/&/,"\\\\&"); standards=standards (NR>1?"\n":"") $0; next} {gsub(/\{\{STANDARDS\}\}/, standards); print}' "$STANDARDS_FILE" "$SCRIPT_DIR/base/CLAUDE.md"
     else
       cat "$SCRIPT_DIR/base/CLAUDE.md"
     fi
