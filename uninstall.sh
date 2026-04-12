@@ -18,12 +18,37 @@ source "$MANIFEST_FILE"
 
 echo "Uninstalling profile: $PROFILE"
 
-# --- Restore settings.json from backup ---
+# --- Surgically remove only claude-kits settings keys ---
 BACKUP="${SETTINGS_BACKUP:-$SETTINGS_FILE.bak}"
-if [ -f "$BACKUP" ]; then
+KITS_SETTINGS="$CLAUDE_DIR/.claude-kits-settings.json"
+
+if [ -f "$KITS_SETTINGS" ] && [ -f "$BACKUP" ]; then
+  # For each key in current settings:
+  #   - If claude-kits managed it AND it existed pre-install → restore original value
+  #   - If claude-kits managed it AND it didn't exist pre-install → remove it
+  #   - If claude-kits didn't manage it → keep current value (preserves user additions)
+  jq --slurpfile backup "$BACKUP" \
+     --slurpfile kits "$KITS_SETTINGS" '
+    $backup[0] as $b | $kits[0] as $k |
+    [ to_entries[] | . as $entry |
+      if ($k | has($entry.key)) then
+        if ($b | has($entry.key)) then
+          $entry | .value = $b[$entry.key]
+        else
+          empty
+        end
+      else
+        $entry
+      end
+    ] | from_entries
+  ' "$SETTINGS_FILE" > "${SETTINGS_FILE}.tmp" && mv "${SETTINGS_FILE}.tmp" "$SETTINGS_FILE"
+  rm -f "$BACKUP" "$KITS_SETTINGS"
+  echo "  [ok] Removed claude-kits settings (preserved user additions)"
+elif [ -f "$BACKUP" ]; then
+  # Fallback for installations before surgical uninstall was added
   cp "$BACKUP" "$SETTINGS_FILE"
   rm -f "$BACKUP"
-  echo "  [ok] Restored settings.json from backup"
+  echo "  [ok] Restored settings.json from backup (legacy)"
 else
   echo "  [warn] No settings backup found, settings.json left as-is"
 fi

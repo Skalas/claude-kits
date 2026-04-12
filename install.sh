@@ -112,6 +112,7 @@ FINAL_SETTINGS=$(echo "$EXISTING_SETTINGS" | jq -s '
 ' - <(echo "$MERGED_SETTINGS"))
 
 cp "$SETTINGS_FILE" "$SETTINGS_FILE.bak"
+echo "$MERGED_SETTINGS" | jq '.' > "$CLAUDE_DIR/.claude-kits-settings.json"
 echo "$FINAL_SETTINGS" | jq '.' > "$SETTINGS_FILE"
 echo "  [ok] Merged settings.json (backup at settings.json.bak)"
 
