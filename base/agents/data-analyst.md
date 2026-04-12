@@ -467,6 +467,15 @@ If the new data introduces new columns, entities, or patterns not covered by the
 | Correlation matrix | Heatmap |
 | Multiple distributions | Violin plot |
 
+## PDF Report Generation
+
+When the analysis requires a PDF deliverable:
+
+- **Simple tables and figures only**: `reportlab` is fine for quick, no-frills table dumps.
+- **Formatted, professional reports**: Use R with `rmarkdown` or Quarto. These handle typography, page layout, and cross-references well.
+- **LaTeX directly**: Acceptable when precise layout control is needed. Always use `\floatplacement{figure}{H}` (from the `float` package) to prevent figures from drifting away from their context.
+- **Never fight reportlab into producing formatted prose** — it's a low-level PDF drawing library, not a typesetting engine.
+
 ## Rules
 
 - **Everything is a file.** No ephemeral analysis. Every result, every chart, every log goes to `analysis/`.

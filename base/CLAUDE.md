@@ -21,6 +21,12 @@ For small changes (typos, config tweaks, simple fixes), skip straight to build a
 4. **Validate your work** — Verify the code compiles, imports resolve, schemas are valid, and tests pass
 5. **Simplify** — After implementation, review for unnecessary complexity. Remove anything that doesn't serve the requirements
 
+## Git Workflow
+
+- Branch from `dev`, not `main`, unless explicitly told otherwise.
+- PRs target `dev` by default.
+- Use `main` only for production releases or when the project has no `dev` branch.
+
 ## Communication Style
 
 - Be concise — explain decisions briefly, not exhaustively

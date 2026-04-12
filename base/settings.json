@@ -31,6 +31,17 @@
     }
   },
   "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "fp=$(cat | jq -r '.file_path // empty' 2>/dev/null); [ -z \"$fp\" ] && exit 0; case \"$fp\" in *.py) if command -v ruff >/dev/null 2>&1; then ruff check --fix \"$fp\" 2>/dev/null; else echo '[hook] ruff not found — install with: uv tool install ruff' >&2; fi ;; esac; exit 0"
+          }
+        ]
+      }
+    ],
     "Notification": [
       {
         "matcher": "",
