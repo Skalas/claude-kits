@@ -38,6 +38,17 @@ The domain and application layers must never import from infrastructure or prese
 - **Error handling**: Use domain-specific exceptions and structured error responses. Never swallow errors. Never use generic catch-all error messages.
 - **No magic**: No magic numbers, no magic strings. Use enums, constants, and configuration.
 
+### Python
+
+- **Package management**: Always use `uv` instead of `pip`. Use `uv venv` for virtual environments, `uv pip install` for packages, `uv run` for script execution. Never default to pip.
+- **Virtual environments**: Always work inside a virtual environment. Use `uv venv .venv && source .venv/bin/activate` as the standard setup pattern.
+
+### Data Processing
+
+- Shell tools (`awk`, `cut`, `sed`, `jq`) are fine for quick transformations and pipelines on well-structured data.
+- When using shell tools, check file encoding first (`file -I` or `head -c 100 | xxd`) — non-UTF-8 encoding, BOM markers, and mixed line endings are common failure modes.
+- For complex transformations (multi-step joins, pivots, aggregations) or messy data (inconsistent delimiters, quoted fields, mixed types), prefer Python with `pandas`.
+
 ### Development Environment
 
 - When scaffolding or setting up a project, check that the appropriate LSP server for the project's language is installed. If not, install it as part of the dev environment setup.
