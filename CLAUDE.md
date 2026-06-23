@@ -34,7 +34,7 @@ You can also install a single profile with `install.sh <profile>` if preferred.
 
 - **Two types of commands** — *Workflow commands* (`/plan`, `/ship`, `/review`) are cognitive modes that change how the main session thinks. *Task commands* (`/commit`, `/explain`, `/standup`) are quick utilities. Workflow commands may delegate to subagents for heavy lifting.
 - **Agents are self-contained** — each domain agent includes full engineering standards + domain expertise, since agents run as isolated subprocesses without access to `CLAUDE.md`
-- **Commands orchestrate agents** — workflow commands like `/review` launch `code-reviewer` and `security-auditor` in parallel, then merge findings. This combines cognitive modes with specialist delegation.
+- **Commands orchestrate agents** — workflow commands like `/review` launch `code-reviewer`, `security-auditor`, and `refactorer` in parallel, then merge findings into three tiers (CRITICAL / DESIGN / INFORMATIONAL). This combines cognitive modes with specialist delegation.
 - **`CLAUDE.md` is slim** — only sets interaction preferences (working approach, communication style) for the main session
 - **`base/standards.md` is the single source** — engineering standards live here once; agents use `{{STANDARDS}}` placeholder, and `install.sh` injects the content at install time
 - **All domains available at once** — `--all` installs every domain agent; no switching needed

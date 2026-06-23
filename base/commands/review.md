@@ -1,6 +1,6 @@
 ---
 name: review
-description: "Pre-landing review. Two-pass analysis of diff against main for structural issues that tests don't catch."
+description: "Pre-landing review. Three-reviewer analysis (correctness, security, elegance) of diff against main for structural issues that tests don't catch."
 ---
 
 Run a pre-landing review on the current branch's diff against main.
@@ -20,48 +20,58 @@ git diff origin/main
 
 This captures both committed and uncommitted changes against the latest main.
 
-## Step 3: Two-pass review
+## Step 3: Three-reviewer parallel review
 
-Launch the `code-reviewer` agent with the diff. Instruct it to run two passes:
+Launch three agents **in parallel** on the same diff. Each owns a tier:
 
-**Pass 1 — CRITICAL (must fix before merge):**
+**`code-reviewer` + `security-auditor` → CRITICAL (must fix before merge):**
 - SQL/command/template injection, XSS
 - Hardcoded secrets or credentials
 - Race conditions, data loss risks
 - Missing auth/authz on new endpoints
 - Trust boundary violations (unsanitized external input in sensitive operations)
 - Broken invariants (e.g., "exactly one primary" rule that can break under concurrency)
+- **Runtime correctness**: does the change survive its deployment model? (scale-to-zero / SIGTERM killing in-flight work, work that exceeds the platform timeout, missing retry/dead-letter). The diff can be clean and still be wrong for how it actually runs.
 
-**Pass 2 — INFORMATIONAL (should fix, not a blocker):**
-- N+1 queries, missing indexes
-- Dead code, unused imports
-- DRY violations, magic numbers/strings
-- Missing error handling, swallowed exceptions
-- Test gaps for new code paths
-- Naming/clarity issues
+`code-reviewer` also reports INFORMATIONAL items (N+1 queries, dead code, magic values, missing error handling, test gaps).
 
-Also launch the `security-auditor` agent in parallel on the same diff for a security-focused pass.
+**`refactorer` → DESIGN (elegance & simplicity):**
+Run it **report-only** and **scoped to the diff**. Ask it to focus on:
+- Over-abstraction (interface/wrapper with one impl, not at an architecture boundary)
+- Premature generalization — parameterized for cases that don't exist yet
+- Unnecessary indirection, layer violations (logic in the wrong Clean Architecture layer)
+- Native/framework replacements (built-in feature reimplemented by hand)
+- KISS/DRY violations, and naming that doesn't reveal intent
 
-## Step 4: Present findings
+Its standard guardrails apply: three similar lines is fine, don't touch what works, only flag a finding when there's a concrete simpler alternative. DESIGN is not style nitpicking — every finding needs a before/after.
 
-Merge findings from both agents. Deduplicate overlapping issues (prefer the more specific finding).
+## Step 4: Present findings — ALWAYS print the full review
 
-Output header: `Pre-Landing Review: N issues (X critical, Y informational)`
+Merge findings from all three agents. Deduplicate overlapping issues (prefer the more specific finding).
 
-- **All findings are shown** — both critical and informational. Never hide issues.
-- Group by file, order by severity (critical first).
-- Each finding: one-line problem, one-line fix. No preamble.
+Output header: `Pre-Landing Review: N issues (X critical, Y design, Z informational)`
 
-## Step 5: Handle critical issues
+- **Always print the complete review to screen** — every tier, every finding — before taking any action. Never hide issues, and never skip the printout even when there's nothing to apply.
+- Group by file, order by tier (CRITICAL → DESIGN → INFORMATIONAL).
+- Each finding: one-line problem, one-line fix. DESIGN findings include a brief before/after. No preamble.
+
+## Step 5: Handle CRITICAL issues (blocking gate)
 
 If CRITICAL issues found, for EACH one use AskUserQuestion:
 - State the problem (file:line + description)
 - Recommend the fix
 - Options: A) Fix it now B) Acknowledge and ship anyway C) False positive — skip
 
-If user chose A on any issue: apply the fix. Do NOT commit — let the user decide when to commit.
+If user chose A: apply the fix. If user chose B: record the accepted risk and any deferred fix in your summary (don't silently drop it). Do NOT commit — let the user decide when to commit.
 
-If only informational issues found or no issues: done. No further action needed.
+## Step 6: Handle DESIGN findings (suggest to apply)
+
+DESIGN findings are behavior-preserving simplifications. After the full review is printed, **offer to apply them** via AskUserQuestion:
+- Options: A) Apply all B) Let me pick C) None — leave as-is
+
+If A or B: apply the chosen simplifications directly, then run the project's test suite. If any test fails, revert that simplification — the "simpler" version was wrong. Do NOT commit.
+
+If no DESIGN or CRITICAL issues: done. The printed review stands on its own.
 
 ## Rules
 

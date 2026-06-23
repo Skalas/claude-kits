@@ -8,7 +8,7 @@ For non-trivial work, follow this sequence. Each step has a dedicated command:
 
 1. **Plan** (`/plan`) — Architecture review, failure modes, test matrix, diagrams. Choose a mode: EXPAND (dream big), HOLD (make it bulletproof), or REDUCE (strip to essentials). Do NOT write code in this phase.
 2. **Build** — Implement the plan. Use domain agents (nestjs-engineer, vue-engineer, etc.) for specialized work. Build in layers: domain first, then application, then infrastructure, then presentation.
-3. **Review** (`/review`) — Two-pass pre-landing review (CRITICAL + INFORMATIONAL). Runs code-reviewer and security-auditor agents in parallel. Fix critical issues before shipping.
+3. **Review** (`/review`) — Three-reviewer pre-landing review (CRITICAL + DESIGN + INFORMATIONAL). Runs code-reviewer, security-auditor, and refactorer in parallel. Fix critical issues before shipping; DESIGN findings (elegance/simplicity) are suggested for one-click apply.
 4. **Ship** (`/ship`) — Automated pipeline: merge main, run tests, pre-landing review, bisectable commits, push, create PR.
 
 For small changes (typos, config tweaks, simple fixes), skip straight to build and use `/commit` when done. The full cycle is for features, refactors, and anything touching multiple files.
