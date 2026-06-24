@@ -45,23 +45,10 @@ If any findings exist, apply the fixes directly. These are safe simplifications,
 
 After applying fixes, run the project's test suite to verify nothing broke.
 
-## Step 5: Leave a debt trail for deferred simplifications
-
-When you deliberately *don't* simplify something but it has a real future ceiling — e.g. the "wait for the third occurrence" rule below — drop a one-line debt comment at the site so `/todo` can harvest it later:
-
-```
-# DEBT(simplify): <current ceiling> → <trigger to upgrade>
-```
-
-Example: `# DEBT(simplify): duplicated parse in 2 places → extract a shared helper on the 3rd copy`.
-
-Only leave debt with a concrete upgrade trigger. Don't annotate code that's simply fine as-is.
-
-## Relationship to /review and /todo
+## Relationship to /review
 
 - `/simplify` is the **apply-only** elegance pass — fast cleanup with no review ceremony.
 - `/review`'s DESIGN tier covers the same `refactorer` smells but only **suggests**, inside the full pre-landing round. Use `/review` before merge, `/simplify` for a quick standalone sweep.
-- Both feed `/todo` via the `DEBT:` comments above, so deferred work resurfaces instead of evaporating.
 
 ## Rules
 

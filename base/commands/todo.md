@@ -10,7 +10,7 @@ Scan the codebase for action items left in code comments.
 Search for markers, excluding vendor/generated directories:
 
 ```bash
-grep -rn "TODO\|FIXME\|HACK\|XXX\|WARN\|DEBT" \
+grep -rn "TODO\|FIXME\|HACK\|XXX\|WARN" \
   --include="*.ts" --include="*.js" --include="*.py" --include="*.rb" \
   --include="*.go" --include="*.rs" --include="*.java" --include="*.vue" \
   --include="*.tsx" --include="*.jsx" \
@@ -29,7 +29,6 @@ For each finding, extract:
 Categorize by priority:
 - **Critical** (`FIXME`, `HACK`) — things that are broken or working around a problem
 - **Action needed** (`TODO`) — planned work that hasn't been done
-- **Tech debt** (`DEBT`) — deferred simplifications left by `/review` or `/simplify`, each naming a current ceiling and the trigger to upgrade. Format: `DEBT(simplify): <ceiling> → <upgrade trigger>`
 - **Informational** (`XXX`, `WARN`) — notes and warnings
 
 Check git blame for age: `git log -1 --format="%ar" -- <file>` for each file. Old TODOs (6+ months) are flagged as stale.
@@ -45,9 +44,6 @@ TODO Scan: N items (X critical, Y action needed, Z informational)
 ## Action Needed (TODO)
 - file:line — comment text [age: 2 weeks ago]
 - file:line — comment text [STALE: 8 months ago]
-
-## Tech Debt (DEBT)
-- file:line — ceiling → upgrade trigger [age: 1 month ago]
 
 ## Informational (XXX/WARN)
 - file:line — comment text
