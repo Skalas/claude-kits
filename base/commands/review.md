@@ -62,7 +62,7 @@ If CRITICAL issues found, for EACH one use AskUserQuestion:
 - Recommend the fix
 - Options: A) Fix it now B) Acknowledge and ship anyway C) False positive — skip
 
-If user chose A: apply the fix. If user chose B: record the accepted risk and any deferred fix in your summary (don't silently drop it). Do NOT commit — let the user decide when to commit.
+If user chose A: apply the fix. If user chose B: record the accepted risk and drop a `DEBT:` comment at the site naming the deferred fix (see Step 7) — don't let it evaporate into the summary. Do NOT commit — let the user decide when to commit.
 
 ## Step 6: Handle DESIGN findings (suggest to apply)
 
@@ -71,7 +71,25 @@ DESIGN findings are behavior-preserving simplifications. After the full review i
 
 If A or B: apply the chosen simplifications directly, then run the project's test suite. If any test fails, revert that simplification — the "simpler" version was wrong. Do NOT commit.
 
+## Step 7: Leave a debt trail for what wasn't applied
+
+For each DESIGN finding the user declined (and each "ship anyway" from Step 5) that has a real future upgrade, drop a one-line debt comment at the site so `/todo` can harvest it later:
+
+```
+# DEBT(simplify): <current ceiling> → <trigger to upgrade>
+```
+
+Example: `# DEBT(simplify): inline if/elif dispatch → extract to a handler map when a 3rd branch appears`.
+
+Only leave debt for findings with a concrete upgrade trigger. A pure nitpick that the user rejected gets no comment — silence beats noise.
+
 If no DESIGN or CRITICAL issues: done. The printed review stands on its own.
+
+## Relationship to /simplify and /todo
+
+- `/review` **finds and suggests** across all three tiers; it's the full pre-landing round.
+- `/simplify` is the standalone, deliberate **apply-only** elegance pass — reach for it when you want cleanup without a full review. Both drive the `refactorer` agent on the same DESIGN smells; don't restate the taxonomy, defer to the agent.
+- `/todo` is where declined work resurfaces — it harvests the `DEBT:` comments this command leaves.
 
 ## Rules
 
