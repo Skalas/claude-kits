@@ -10,6 +10,7 @@ Claude Code reads its configuration from `~/.claude/` (settings, agents, command
 - **Domain agents** — self-contained agents with full engineering standards and deep domain expertise, all available simultaneously
 - **Task agents** — code reviewer, test generator, dependency auditor available in every session
 - **Slash commands** — `/review`, `/explain`, `/audit-deps`, `/standup` ready to use
+- **Skills** — bundled Claude Code skills (e.g. `writing-voice`) installed under `~/.claude/skills/`, preserving any other skills you already have
 - **One-command setup** — install everything with `./install.sh --all`
 - **Clean uninstall** — a manifest tracks every file so nothing is left behind
 
@@ -53,7 +54,8 @@ base/                        # Shared by ALL profiles
   ├── standards.md           # Engineering standards source (not installed — embedded in agents)
   ├── settings.json          # Common settings
   ├── agents/                # Task agents (code-reviewer, test-generator, dependency-auditor)
-  └── commands/              # Slash commands (/review, /explain, /audit-deps, /standup)
+  ├── commands/              # Slash commands (/review, /explain, /audit-deps, /standup)
+  └── skills/                # Bundled skills (SKILL.md + assets), installed to ~/.claude/skills/
 
 profiles/<name>/             # Domain-specific profiles
   ├── CLAUDE.md              # Domain expertise source (used to compose agents)
@@ -79,8 +81,9 @@ When you run `./install.sh --all`:
 1. **Settings** — all `settings.json` files are deep-merged into `~/.claude/settings.json`. A backup is saved.
 2. **Agents** — all `.md` files from `base/agents/` and every `profiles/*/agents/` are copied to `~/.claude/agents/`.
 3. **Commands** — all command files are copied to `~/.claude/commands/`.
-4. **CLAUDE.md** — `base/CLAUDE.md` (standards + interaction preferences, with `{{STANDARDS}}` injected) is appended to `~/.claude/CLAUDE.md`.
-5. **Manifest** — tracks everything installed for clean uninstall.
+4. **Skills** — each subdirectory of `base/skills/` is mirrored into `~/.claude/skills/<skill-name>/`. Installation is surgical — user-owned skills under `~/.claude/skills/` (e.g. a manually installed `humanizer`) are never touched, and inside managed skill dirs we overwrite `SKILL.md` but preserve user-edited files like `my-voice.md` and any personal `samples/`.
+5. **CLAUDE.md** — `base/CLAUDE.md` (standards + interaction preferences, with `{{STANDARDS}}` injected) is appended to `~/.claude/CLAUDE.md`.
+6. **Manifest** — tracks everything installed for clean uninstall.
 
 ### Why agents are self-contained
 
@@ -133,6 +136,16 @@ These agents are available in every installation:
 | `/api-design <endpoint>` | ai-connectors | Design or review a FastAPI endpoint for AI connectors |
 | `/profile <path>` | performance-engineering | Analyze code for performance issues using USE/RED methods |
 
+## Bundled Skills
+
+Skills live in `~/.claude/skills/<name>/` and are invoked via the `Skill` tool or `/skills`. Claude Code discovers them from that directory.
+
+| Skill | Purpose |
+|-------|---------|
+| `writing-voice` | Reviews documents and blog posts in three passes: internal consistency, voice emulation against your personal fingerprint (`my-voice.md`), and an anti-AI "slop" floor. Bootstraps the fingerprint once from 3–5 of your own writing samples in `samples/`. |
+
+**Bootstrap for `writing-voice`:** drop 3–5 of your own pieces into `~/.claude/skills/writing-voice/samples/` as `.md` or `.txt`, then invoke the skill and it will populate `my-voice.md`. Your samples and your populated `my-voice.md` are preserved across reinstalls and partial uninstalls.
+
 ## Performance Optimizations
 
 ### LSP Servers
@@ -180,7 +193,7 @@ The generated agent uses the `{{STANDARDS}}` placeholder — standards are injec
 ./uninstall.sh
 ```
 
-This restores `settings.json` from the backup, removes installed agents and commands, strips the profile sections from `CLAUDE.md`, and deletes the manifest.
+This restores `settings.json` from the backup, removes installed agents, commands, and skill code (but not user data like `my-voice.md` or `samples/`), strips the profile sections from `CLAUDE.md`, and deletes the manifest. Skills you installed manually (not via claude-kits) are never touched.
 
 ## License
 

@@ -5,6 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CLAUDE_DIR="$HOME/.claude"
 AGENTS_DIR="$CLAUDE_DIR/agents"
 COMMANDS_DIR="$CLAUDE_DIR/commands"
+SKILLS_DIR="$CLAUDE_DIR/skills"
 SETTINGS_FILE="$CLAUDE_DIR/settings.json"
 MANIFEST_FILE="$CLAUDE_DIR/.installed-profile"
 
@@ -55,6 +56,7 @@ fi
 # Ensure target directories exist
 mkdir -p "$AGENTS_DIR"
 mkdir -p "$COMMANDS_DIR"
+mkdir -p "$SKILLS_DIR"
 
 # Initialize settings.json if it doesn't exist
 if [ ! -f "$SETTINGS_FILE" ]; then
@@ -75,6 +77,7 @@ echo ""
 # --- Track installed files for clean uninstall ---
 INSTALLED_AGENTS=()
 INSTALLED_COMMANDS=()
+INSTALLED_SKILLS=()
 
 # --- Load standards for injection into agents ---
 STANDARDS_FILE="$SCRIPT_DIR/base/standards.md"
@@ -138,6 +141,48 @@ if [ -d "$SCRIPT_DIR/base/commands" ]; then
   done
 fi
 
+# --- Copy base skills (directories, preserving user data) ---
+# Skills are directories under ~/.claude/skills/<skill-name>/. To avoid
+# clobbering user-owned skills (e.g. a manually installed humanizer):
+#   - We never rm -rf $SKILLS_DIR. We only touch directories we own.
+#   - SKILL.md is always overwritten (it's our code).
+#   - my-voice.md is copied only if missing (preserve user edits).
+#   - samples/ is created if missing; existing user samples are left alone.
+#   - Other top-level .md docs in the skill dir are copied fresh.
+if [ -d "$SCRIPT_DIR/base/skills" ]; then
+  for skill_src in "$SCRIPT_DIR/base/skills"/*/; do
+    [ -d "$skill_src" ] || continue
+    skill_name=$(basename "$skill_src")
+    skill_dest="$SKILLS_DIR/$skill_name"
+    mkdir -p "$skill_dest"
+
+    if [ -f "$skill_src/SKILL.md" ]; then
+      cp "$skill_src/SKILL.md" "$skill_dest/SKILL.md"
+    fi
+
+    if [ -f "$skill_src/my-voice.md" ] && [ ! -f "$skill_dest/my-voice.md" ]; then
+      cp "$skill_src/my-voice.md" "$skill_dest/my-voice.md"
+    fi
+
+    mkdir -p "$skill_dest/samples"
+    if [ -f "$skill_src/samples/README.md" ] && [ ! -f "$skill_dest/samples/README.md" ]; then
+      cp "$skill_src/samples/README.md" "$skill_dest/samples/README.md"
+    fi
+
+    for other in "$skill_src"*.md; do
+      [ -f "$other" ] || continue
+      base=$(basename "$other")
+      case "$base" in
+        SKILL.md|my-voice.md) continue ;;
+      esac
+      cp "$other" "$skill_dest/$base"
+    done
+
+    INSTALLED_SKILLS+=("$skill_name")
+    echo "  [ok] Installed skill: $skill_name"
+  done
+fi
+
 # --- Copy profile agents and commands ---
 for p in "${PROFILES[@]}"; do
   pdir="$SCRIPT_DIR/profiles/$p"
@@ -188,11 +233,13 @@ echo "  [ok] Appended CLAUDE.md (standards + interaction preferences)"
   echo "SETTINGS_BACKUP=$SETTINGS_FILE.bak"
   echo "AGENTS=\"${INSTALLED_AGENTS[*]}\""
   echo "COMMANDS=\"${INSTALLED_COMMANDS[*]}\""
+  echo "SKILLS=\"${INSTALLED_SKILLS[*]}\""
 } > "$MANIFEST_FILE"
 
 echo ""
 echo "Installation complete: $PROFILE_LABEL"
 echo "  Agents:   ${#INSTALLED_AGENTS[@]}"
 echo "  Commands: ${#INSTALLED_COMMANDS[@]}"
+echo "  Skills:   ${#INSTALLED_SKILLS[@]}"
 echo "  Profiles: ${#PROFILES[@]}"
 echo "Manifest written to $MANIFEST_FILE"

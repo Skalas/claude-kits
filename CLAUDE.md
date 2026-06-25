@@ -11,6 +11,7 @@ base/                  # Shared foundation applied to ALL profiles
   settings.json        # Settings merged into every profile
   agents/              # Task-oriented agents (code-reviewer, test-generator, dependency-auditor)
   commands/            # Slash commands — workflow (/plan, /ship, /review) and task (/commit, /explain, /standup)
+  skills/<name>/       # Bundled skills installed to ~/.claude/skills/<name>/ (SKILL.md + assets)
 
 profiles/<name>/       # Domain-specific profiles
   CLAUDE.md            # Domain expertise source (used to compose agents, not installed directly)
@@ -25,8 +26,9 @@ profiles/<name>/       # Domain-specific profiles
 1. Deep-merges `base/settings.json` + all `profiles/*/settings.json` into `~/.claude/settings.json`
 2. Copies agents from `base/agents/` and all `profiles/*/agents/` — all domain agents available simultaneously
 3. Copies commands from `base/commands/` and all `profiles/*/commands/`
-4. Appends `base/CLAUDE.md` (standards + interaction preferences, with `{{STANDARDS}}` injected) to `~/.claude/CLAUDE.md`
-5. Writes a manifest to `~/.claude/.installed-profile` for clean uninstall
+4. Mirrors each `base/skills/<name>/` into `~/.claude/skills/<name>/`. User-owned skills (directories we didn't install) are never touched. Inside managed skill dirs we overwrite `SKILL.md` but preserve user-edited files such as `my-voice.md` and `samples/` contents
+5. Appends `base/CLAUDE.md` (standards + interaction preferences, with `{{STANDARDS}}` injected) to `~/.claude/CLAUDE.md`
+6. Writes a manifest to `~/.claude/.installed-profile` for clean uninstall
 
 You can also install a single profile with `install.sh <profile>` if preferred.
 
@@ -34,7 +36,7 @@ You can also install a single profile with `install.sh <profile>` if preferred.
 
 - **Two types of commands** — *Workflow commands* (`/plan`, `/ship`, `/review`) are cognitive modes that change how the main session thinks. *Task commands* (`/commit`, `/explain`, `/standup`) are quick utilities. Workflow commands may delegate to subagents for heavy lifting.
 - **Agents are self-contained** — each domain agent includes full engineering standards + domain expertise, since agents run as isolated subprocesses without access to `CLAUDE.md`
-- **Commands orchestrate agents** — workflow commands like `/review` launch `code-reviewer` and `security-auditor` in parallel, then merge findings. This combines cognitive modes with specialist delegation.
+- **Commands orchestrate agents** — workflow commands like `/review` launch `code-reviewer`, `security-auditor`, and `refactorer` in parallel, then merge findings into three tiers (CRITICAL / DESIGN / INFORMATIONAL). This combines cognitive modes with specialist delegation.
 - **`CLAUDE.md` is slim** — only sets interaction preferences (working approach, communication style) for the main session
 - **`base/standards.md` is the single source** — engineering standards live here once; agents use `{{STANDARDS}}` placeholder, and `install.sh` injects the content at install time
 - **All domains available at once** — `--all` installs every domain agent; no switching needed

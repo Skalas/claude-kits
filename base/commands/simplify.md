@@ -45,6 +45,11 @@ If any findings exist, apply the fixes directly. These are safe simplifications,
 
 After applying fixes, run the project's test suite to verify nothing broke.
 
+## Relationship to /review
+
+- `/simplify` is the **apply-only** elegance pass — fast cleanup with no review ceremony.
+- `/review`'s DESIGN tier covers the same `refactorer` smells but only **suggests**, inside the full pre-landing round. Use `/review` before merge, `/simplify` for a quick standalone sweep.
+
 ## Rules
 
 - **Only simplify, never change behavior.** The output must be functionally identical to the input.
