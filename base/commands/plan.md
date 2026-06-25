@@ -34,11 +34,13 @@ Present these findings concisely. If the premise is solid, say so and move on.
 
 ## Step 3: Mode Selection
 
-Present three options and recommend one based on context:
+**Decide mode by failure surface and value — never by development time or effort.** Assume the code is written by an AI: hours/days/file-counts are not a real cost, so they must not drive scope. The real cost is the failure surface a change adds — money flows, persistent/multi-tenant state, state transitions, irreversible operations, blast radius, long-term maintenance. There is no default mode; pick the one the risk and value justify:
 
-- **EXPAND** — The plan is good but could be great. Find the 10-star version. Push scope up. (Default for greenfield features)
-- **HOLD** — The plan's scope is right. Make it bulletproof — architecture, security, edge cases, deployment. (Default for bug fixes, refactors)
-- **REDUCE** — The plan is overbuilt. Find the minimum viable version. Cut everything else. (Suggest when plan touches >15 files)
+- **EXPAND** — The outcome is under-served by the current plan. Push scope up toward the version that actually solves the problem. Justify by *value left on the table*, not by "there's time."
+- **HOLD** — Scope is right but the surface is risky. Make it bulletproof — architecture, security, edge cases, deployment. Default lens whenever money, shared state, or irreversible operations are in play.
+- **REDUCE** — The plan adds failure points whose marginal value doesn't justify them. Cut *those pieces*, not scope-to-go-faster. Never trim a deliverable just because it would take longer to build.
+
+Anti-pattern to flag explicitly: scope cut "to save time" or "to keep it small" with no failure-surface argument behind it. That's a fictitious constraint — call it out and re-scope to the real outcome.
 
 Ask the user to pick. Once selected, commit fully — do not silently drift to a different mode.
 
@@ -124,7 +126,7 @@ Flag untested paths. If the plan doesn't mention tests, propose the test plan ex
 - **Rollout order** — migrate first, deploy second? Or vice versa?
 - **Risk window** — old code and new code running simultaneously. What breaks?
 
-**REDUCE mode:** Skip this section if the change is small (<50 lines, <4 files).
+**Skip this section only if the change has no failure surface here** — no migration, no new external integration, no irreversible operation, no shared/multi-tenant state mutation. Size in lines/files is irrelevant; risk is the test.
 
 ## Step 8: Completion Summary
 
