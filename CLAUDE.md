@@ -65,4 +65,11 @@ Agent `.md` files use `{{STANDARDS}}` as a placeholder for engineering standards
 ./install.sh <profile>      # Install base + a single profile
 ./uninstall.sh              # Remove the active installation
 ./new-profile.sh <name>     # Scaffold a new profile with template agent
+./kit-doctor.sh             # Report kit-owned files that drifted from the kit
 ```
+
+## Provenance & Safety
+
+- **Collision guard** — `install.sh` never overwrites a file it doesn't own. A destination is writable only if it doesn't yet exist or was listed in the prior `~/.claude/.installed-profile`. A personal command/agent/skill that name-collides with a kit file is skipped and reported, never clobbered.
+- **`.kit-lock`** — each install records the kit remote, ref, SHA, and timestamp to `~/.claude/.kit-lock`, so the installed revision is always identifiable.
+- **`kit-doctor.sh`** — regenerates each installed kit file from source (expanding `{{STANDARDS}}`) and diffs it against the installed copy. A kit-owned file hand-edited in place is flagged as `DRIFTED` — backport it to the kit or it is lost on the next install. Also reports whether `.kit-lock` is behind kit HEAD. Exits non-zero on drift (CI/cron friendly).
