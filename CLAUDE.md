@@ -11,6 +11,7 @@ base/                  # Shared foundation applied to ALL profiles
   settings.json        # Settings merged into every profile
   agents/              # Task-oriented agents (code-reviewer, test-generator, dependency-auditor)
   commands/            # Slash commands — workflow (/plan, /ship, /review) and task (/commit, /explain, /standup)
+  skills/<name>/       # Bundled skills installed to ~/.claude/skills/<name>/ (SKILL.md + assets)
 
 profiles/<name>/       # Domain-specific profiles
   CLAUDE.md            # Domain expertise source (used to compose agents, not installed directly)
@@ -25,8 +26,9 @@ profiles/<name>/       # Domain-specific profiles
 1. Deep-merges `base/settings.json` + all `profiles/*/settings.json` into `~/.claude/settings.json`
 2. Copies agents from `base/agents/` and all `profiles/*/agents/` — all domain agents available simultaneously
 3. Copies commands from `base/commands/` and all `profiles/*/commands/`
-4. Appends `base/CLAUDE.md` (standards + interaction preferences, with `{{STANDARDS}}` injected) to `~/.claude/CLAUDE.md`
-5. Writes a manifest to `~/.claude/.installed-profile` for clean uninstall
+4. Mirrors each `base/skills/<name>/` into `~/.claude/skills/<name>/`. User-owned skills (directories we didn't install) are never touched. Inside managed skill dirs we overwrite `SKILL.md` but preserve user-edited files such as `my-voice.md` and `samples/` contents
+5. Appends `base/CLAUDE.md` (standards + interaction preferences, with `{{STANDARDS}}` injected) to `~/.claude/CLAUDE.md`
+6. Writes a manifest to `~/.claude/.installed-profile` for clean uninstall
 
 You can also install a single profile with `install.sh <profile>` if preferred.
 

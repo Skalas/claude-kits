@@ -4,6 +4,7 @@ set -euo pipefail
 CLAUDE_DIR="$HOME/.claude"
 AGENTS_DIR="$CLAUDE_DIR/agents"
 COMMANDS_DIR="$CLAUDE_DIR/commands"
+SKILLS_DIR="$CLAUDE_DIR/skills"
 SETTINGS_FILE="$CLAUDE_DIR/settings.json"
 MANIFEST_FILE="$CLAUDE_DIR/.installed-profile"
 CLAUDE_MD="$CLAUDE_DIR/CLAUDE.md"
@@ -69,6 +70,41 @@ if [ -n "${COMMANDS:-}" ]; then
     if [ -f "$COMMANDS_DIR/$cmd" ]; then
       rm -f "$COMMANDS_DIR/$cmd"
       echo "  [ok] Removed command: $cmd"
+    fi
+  done
+fi
+
+# --- Remove installed skills (preserve user data) ---
+# We only touch skill directories we installed (tracked in SKILLS).
+# User-added skills elsewhere under $SKILLS_DIR are never touched.
+# Within each tracked skill dir we remove SKILL.md, the unfilled my-voice.md
+# template, and the shipped samples/README.md. We keep the user's edited
+# my-voice.md and any samples they added. The dir is removed only if empty.
+if [ -n "${SKILLS:-}" ]; then
+  for skill in $SKILLS; do
+    skill_dir="$SKILLS_DIR/$skill"
+    [ -d "$skill_dir" ] || continue
+
+    rm -f "$skill_dir/SKILL.md"
+
+    if [ -f "$skill_dir/my-voice.md" ] && grep -q '{{UNFILLED}}' "$skill_dir/my-voice.md"; then
+      rm -f "$skill_dir/my-voice.md"
+    fi
+
+    if [ -d "$skill_dir/samples" ]; then
+      rm -f "$skill_dir/samples/README.md"
+      user_samples=$(find "$skill_dir/samples" -mindepth 1 ! -name '.gitkeep' 2>/dev/null | head -n 1)
+      if [ -z "$user_samples" ]; then
+        rm -f "$skill_dir/samples/.gitkeep"
+        rmdir "$skill_dir/samples" 2>/dev/null || true
+      fi
+    fi
+
+    if [ -z "$(ls -A "$skill_dir" 2>/dev/null)" ]; then
+      rmdir "$skill_dir"
+      echo "  [ok] Removed skill: $skill"
+    else
+      echo "  [info] Skill '$skill' kept at $skill_dir (user data present)"
     fi
   done
 fi
