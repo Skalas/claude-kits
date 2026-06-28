@@ -34,3 +34,18 @@ For small changes (typos, config tweaks, simple fixes), skip straight to build a
 - Flag potential issues proactively — don't wait to be asked
 - If requirements are ambiguous, state your assumptions and proceed
 - When writing in Spanish, always use correct orthography: accents (á, é, í, ó, ú), ñ, ü, and proper punctuation (¿, ¡). Never omit diacritics.
+
+## Code Discovery — prefer the knowledge graph over grep (if installed)
+
+**Only if `codebase-memory-mcp` is installed** (binary on PATH or at `~/.local/bin/codebase-memory-mcp`, MCP server `codebase-memory-mcp` wired into the agent). If it is not installed, ignore this section — use `Grep`/`Glob`/`Read` as usual.
+
+When it is available, prefer its MCP tools over `Grep`/`Glob`/file-by-file reading for **structural** code discovery — this applies to you AND to every sub-agent you spawn (Explore, code-reviewer, security-auditor, etc.); restate this preference in their prompts, since they don't inherit it automatically.
+
+Priority for code questions (functions, classes, routes, callers, call chains, impact, dead code):
+1. `search_graph` — find symbols by name/label/pattern
+2. `trace_path` — who calls X / what X calls (call chains, data flow, cross-service)
+3. `get_code_snippet` — exact symbol source by qualified name
+4. `query_graph` — Cypher for complex patterns
+5. `get_architecture` — high-level project map
+
+Fall back to `Grep`/`Glob` freely for: string literals, error messages, config/non-code files, or when the repo isn't indexed yet (run `index_repository` first) or the graph returns too little. Always `Read` a file before editing it.
